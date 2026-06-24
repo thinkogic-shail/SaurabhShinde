@@ -21,7 +21,7 @@ $statusOptions = $pdo->query(
 )->fetchAll();
 
 $requestStmt = $pdo->prepare(
-    'SELECT cr.CitizenRequestId, cr.RequestNo, cr.Address, cr.AadhaarNo, cr.Description,
+    'SELECT cr.CitizenRequestId, cr.RequestNo, cr.Address, cr.AadhaarNo, cr.Description, cr.Remark,
             cr.RequestStatusId, cr.RaisedDate, cr.ClosedDate, cr.CreatedDate,
             cu.Name, cu.MobileNo,
             rtm.RequestTypeName,
@@ -73,6 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['form_action'] ?? 'save';
     $selectedStatusId = (int) ($_POST['request_status_id'] ?? 0);
     $validStatusIds = array_map(static fn(array $row): int => (int) $row['RequestStatusId'], $dropdownStatusOptions);
+    $remark = trim((string) ($_POST['remark'] ?? ''));
+
+    if ($remark === '') {
+        $errors['remark'] = 'Remark is required.';
+    }
 
     if ($action === 'decline') {
         if ($declinedStatusId === null) {
@@ -80,20 +85,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $selectedStatusId = $declinedStatusId;
         }
-    }
-
-    if (!in_array($selectedStatusId, $validStatusIds, true)) {
-        $errors['request_status_id'] = 'Please select a valid status.';
+    } else {
+        if (!in_array($selectedStatusId, $validStatusIds, true)) {
+            $errors['request_status_id'] = 'Please select a valid status.';
+        }
     }
 
     if ($errors === []) {
         $updateStmt = $pdo->prepare(
             'UPDATE CitizenRequest
-             SET RequestStatusId = :request_status_id
+             SET RequestStatusId = :request_status_id,
+                 Remark = :remark
              WHERE CitizenRequestId = :request_id'
         );
         $updateStmt->execute([
             'request_status_id' => $selectedStatusId,
+            'remark' => $remark,
             'request_id' => $requestId,
         ]);
 
@@ -208,8 +215,6 @@ render_admin_header('Edit My Request', [], 'my-requests', false);
                             class="form-select<?php echo isset($errors['request_status_id']) ? ' is-invalid' : ''; ?>"
                             id="request_status_id"
                             name="request_status_id"
-                            required
-                            data-parsley-required-message="Status is required."
                         >
                             <option value="">Select Status</option>
                             <?php foreach ($dropdownStatusOptions as $statusOption): ?>
@@ -225,6 +230,21 @@ render_admin_header('Edit My Request', [], 'my-requests', false);
                             <div class="invalid-feedback"><?php echo htmlspecialchars($errors['request_status_id'], ENT_QUOTES, 'UTF-8'); ?></div>
                         <?php elseif ($dropdownStatusOptions === []): ?>
                             <div class="form-text text-danger">Only In Progress and Completed statuses should be active in RequestStatusMaster.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="remark" class="form-label">Remark <span class="text-danger">*</span></label>
+                        <textarea
+                            class="form-control<?php echo isset($errors['remark']) ? ' is-invalid' : ''; ?>"
+                            id="remark"
+                            name="remark"
+                            rows="3"
+                            required
+                            data-parsley-required-message="Remark is required."
+                        ><?php echo htmlspecialchars($_POST['remark'] ?? (string) ($request['Remark'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+                        <?php if (isset($errors['remark'])): ?>
+                            <div class="invalid-feedback"><?php echo htmlspecialchars($errors['remark'], ENT_QUOTES, 'UTF-8'); ?></div>
                         <?php endif; ?>
                     </div>
 

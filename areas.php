@@ -88,6 +88,18 @@ render_admin_header('Area Master', [
                     </a>
                 </div>
 
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <!--<label class="form-label" for="custom-search">Search</label> -->
+                        <div class="search-box">
+                            <div class="position-relative">
+                                <input type="search" id="custom-search" class="form-control rounded" placeholder="Search...">
+                                <i class="ri-search-line search-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table id="area-table" class="table table-bordered dt-responsive nowrap w-100 align-middle">
                         <thead style="background-color: #f8f9fa;">
@@ -152,7 +164,11 @@ render_admin_header('Area Master', [
             order: [[0, 'desc']]
         });
 
-        $('.dataTables_filter').css('text-align', 'left').appendTo($('#area-table_wrapper .row:first-child > div:first-child'));
+        $('.dataTables_filter').hide();
+
+        $('#custom-search').on('keyup', function() {
+            areaTable.search(this.value).draw();
+        });
 
         document.querySelectorAll('.delete-area-form').forEach(function (form) {
             form.addEventListener('submit', function (event) {

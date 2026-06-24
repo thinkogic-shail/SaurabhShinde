@@ -105,7 +105,7 @@ function render_admin_header(string $title, array $extraCss = [], string $active
             width: auto;
             height: auto;
             display: block;
-            margin: 0 auto;
+            margin: 18px auto;
             object-fit: contain;
         }
         .navbar-brand-box .logo-lg .header-logo-image {
@@ -114,8 +114,24 @@ function render_admin_header(string $title, array $extraCss = [], string $active
             width: auto;
             height: auto;
             display: block;
-            margin: 0 auto;
+            margin: 16px auto;
             object-fit: contain;
+        }
+        .pagination {
+            --bs-pagination-padding-x: 0.75rem;
+            --bs-pagination-padding-y: 0.5rem;
+            --bs-pagination-font-size: 0.9rem;
+            --bs-pagination-color: #002253;
+            --bs-pagination-active-bg: #002253;
+            --bs-pagination-active-border-color: #002253;
+            --bs-pagination-hover-color: #00183b;
+        }
+        .page-item.active .page-link {
+            background-color: #002253 !important;
+            border-color: #002253 !important;
+        }
+        .page-link {
+            color: #002253;
         }
     </style>
 </head>
@@ -141,16 +157,19 @@ function render_admin_header(string $title, array $extraCss = [], string $active
                 </div>
 
                 <div class="d-flex">
-                    <div class="dropdown d-inline-block">
-                        <button type="button" class="btn header-item waves-effect">
-                            <i class="ri-smartphone-line align-middle me-1"></i>
-                            <?php echo htmlspecialchars($mobile, ENT_QUOTES, 'UTF-8'); ?>
+                    <div class="dropdown d-inline-block user-dropdown">
+                        <button type="button" class="btn header-item waves-effect" id="page-header-user-dropdown"
+                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <img class="rounded-circle header-profile-user" src="<?php echo app_asset('assets/images/users/avatar-2.jpg'); ?>"
+                                alt="Header Avatar">
+                            <span class="d-none d-xl-inline-block ms-1"><?php echo htmlspecialchars($mobile, ENT_QUOTES, 'UTF-8'); ?></span>
+                            <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
                         </button>
-                    </div>
-                    <div class="d-inline-block">
-                        <a href="logout.php" class="btn header-item waves-effect">
-                            <i class="ri-logout-box-r-line align-middle me-1"></i> Logout
-                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a class="dropdown-item" href="#"><i class="ri-user-line align-middle me-1"></i> Profile</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-danger" href="logout.php"><i class="ri-shut-down-line align-middle me-1 text-danger"></i> Logout</a>
+                        </div>
                     </div>
                 </div>
             </div>

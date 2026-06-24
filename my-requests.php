@@ -19,6 +19,18 @@ $requests = $pdo->query(
      ORDER BY cr.CitizenRequestId DESC'
 )->fetchAll();
 
+$requestTypes = array_filter(array_unique(array_column($requests, 'RequestTypeName')));
+sort($requestTypes);
+$wards = array_filter(array_unique(array_column($requests, 'WardName')));
+sort($wards);
+$areas = array_filter(array_unique(array_column($requests, 'AreaName')));
+sort($areas);
+$statusOptions = $pdo->query('SELECT StatusName FROM RequestStatusMaster WHERE IsActive = 1')->fetchAll(PDO::FETCH_COLUMN);
+$statuses = array_unique(array_merge($statusOptions, array_map(function($s) {
+    return (string)$s !== '' ? (string)$s : 'Not Set';
+}, array_column($requests, 'StatusName'))));
+sort($statuses);
+
 render_admin_header('My Requests', [
     app_asset('assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css'),
     app_asset('assets/libs/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css'),
@@ -64,6 +76,55 @@ render_admin_header('My Requests', [
                                 <li class="breadcrumb-item active">My Requests</li>
                             </ol>
                         </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3 align-items-end">
+                    <div class="col">
+                       <!-- <label class="form-label" for="custom-search"></label>-->
+
+                        <div class="search-box">
+                            <div class="position-relative">
+                                <input type="search" id="custom-search" class="form-control rounded" placeholder="Search...">
+                                <i class="ri-search-line search-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="form-label" for="filter-request-type">Request Type</label>
+                        <select id="filter-request-type" class="form-select">
+                            <option value="">All</option>
+                            <?php foreach ($requestTypes as $rt): ?>
+                                <option value="<?php echo htmlspecialchars($rt, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($rt, ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label class="form-label" for="filter-ward">Ward</label>
+                        <select id="filter-ward" class="form-select">
+                            <option value="">All</option>
+                            <?php foreach ($wards as $w): ?>
+                                <option value="<?php echo htmlspecialchars($w, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($w, ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label class="form-label" for="filter-area">Area</label>
+                        <select id="filter-area" class="form-select">
+                            <option value="">All</option>
+                            <?php foreach ($areas as $a): ?>
+                                <option value="<?php echo htmlspecialchars($a, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($a, ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label class="form-label" for="filter-status">Status</label>
+                        <select id="filter-status" class="form-select">
+                            <option value="">All</option>
+                            <?php foreach ($statuses as $s): ?>
+                                <option value="<?php echo htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                 </div>
 
@@ -156,7 +217,28 @@ render_admin_header('My Requests', [
             order: [[7, 'desc']]
         });
 
-        $('.dataTables_filter').css('text-align', 'left').appendTo($('#my-requests-table_wrapper .row:first-child > div:first-child'));
+        $('.dataTables_filter').hide();
+
+        $('#custom-search').on('keyup', function() {
+            myRequestsTable.search(this.value).draw();
+        });
+
+        $('#filter-request-type').on('change', function() {
+            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+            myRequestsTable.column(3).search(val ? val : '', true, false).draw();
+        });
+        $('#filter-ward').on('change', function() {
+            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+            myRequestsTable.column(4).search(val ? val : '', true, false).draw();
+        });
+        $('#filter-area').on('change', function() {
+            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+            myRequestsTable.column(5).search(val ? val : '', true, false).draw();
+        });
+        $('#filter-status').on('change', function() {
+            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+            myRequestsTable.column(6).search(val ? val : '', true, false).draw();
+        });
     });
 </script>
 <?php
