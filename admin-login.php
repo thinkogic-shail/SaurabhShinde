@@ -111,9 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 display: none;
             }
             .authentication-page-content {
-                background:
-                    radial-gradient(circle at top left, rgba(232, 199, 163, 0.45) 0%, rgba(232, 199, 163, 0) 38%),
-                    linear-gradient(135deg, #f4eadc 0%, #f8f2ea 36%, #fbf7f2 100%);
+                background: #002253;
             }
             .login-visual-panel .authentication-bg {
                 min-height: 100vh;
@@ -140,12 +138,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <div class="text-center">
                                                 <div>
                                                     <a href="#" class="authentication-logo">
-                                                        <img src="uploads/login-logo.svg" alt="Saurabh Shinde Foundation Logo" height="92" class="auth-logo mx-auto">
+                                                        <img src="uploads/admin-login-logo.svg" alt="Saurabh Shinde Foundation Logo" height="92" class="auth-logo mx-auto">
                                                     </a>
                                                 </div>
     
-                                                <h4 class="font-size-18 mt-4 text-primary" style="color: #002b6b !important; font-weight: 700;">Saurabh Shinde Foundation</h4>
-                                                <p class="text-muted">Admin Panel Login</p>
+                                                <!--<h4 class="font-size-18 mt-4 text-primary" style="color: #002b6b !important; font-weight: 700;">Saurabh Shinde Foundation</h4>-->
+                                                <!--<p>Admin Panel Login</p>-->
                                             </div>
 
                                             <div class="p-2 mt-5">
@@ -172,12 +170,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                     </div>
                             
                                                     <div class="mt-4 text-center">
-                                                        <button class="btn btn-primary w-md waves-effect waves-light" type="submit" style="background-color: #002b6b; border-color: #002b6b;">Log In</button>
+                                                        <button class="btn btn-primary w-md waves-effect waves-light" type="submit" style="background-color: #F6AF2E; border-color: #F6AF2E; color: #ffffff;">Log In</button>
                                                     </div>
                                                 </form>
                                             </div>
 
-                                            <div class="mt-5 text-center">
+                                            <div class="mt-5 text-center text-white">
                                                 <p>© <script>document.write(new Date().getFullYear())</script> Saurabh Shinde Foundation.</p>
                                             </div>
                                         </div>
