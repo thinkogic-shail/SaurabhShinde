@@ -10,6 +10,10 @@ $totalRequests = 0;
 $closedRequests = 0;
 $openRequests = 0;
 $inProgressRequests = 0;
+$trendLabels = [];
+$raisedTrendData = [];
+$inProgressTrendData = [];
+$closedTrendData = [];
 
 try {
     $pdo = app_pdo();
@@ -35,11 +39,50 @@ try {
          WHERE TRIM(LOWER(rsm.StatusName)) = 'in progress'"
     );
     $inProgressRequests = (int) $inProgressRequestsStmt->fetchColumn();
+
+    $trendRows = $pdo->query(
+        "SELECT DATE_FORMAT(cr.RaisedDate, '%Y-%m') AS month_key,
+                SUM(CASE WHEN TRIM(LOWER(rsm.StatusName)) = 'raised' THEN 1 ELSE 0 END) AS raised_count,
+                SUM(CASE WHEN TRIM(LOWER(rsm.StatusName)) = 'in progress' THEN 1 ELSE 0 END) AS in_progress_count,
+                SUM(CASE WHEN TRIM(LOWER(rsm.StatusName)) IN ('completed', 'declined') THEN 1 ELSE 0 END) AS closed_count
+         FROM CitizenRequest cr
+         INNER JOIN RequestStatusMaster rsm ON rsm.RequestStatusId = cr.RequestStatusId
+         WHERE cr.RaisedDate IS NOT NULL
+         GROUP BY DATE_FORMAT(cr.RaisedDate, '%Y-%m')
+         ORDER BY month_key ASC"
+    )->fetchAll();
+
+    $trendMap = [];
+    foreach ($trendRows as $trendRow) {
+        $trendMap[(string) $trendRow['month_key']] = [
+            'raised' => (int) $trendRow['raised_count'],
+            'in_progress' => (int) $trendRow['in_progress_count'],
+            'closed' => (int) $trendRow['closed_count'],
+        ];
+    }
+
+    $currentMonth = new DateTimeImmutable('first day of this month');
+    for ($offset = 11; $offset >= 0; $offset--) {
+        $monthDate = $currentMonth->modify("-{$offset} months");
+        $monthKey = $monthDate->format('Y-m');
+        $trendLabels[] = $monthDate->format('M Y');
+        $raisedTrendData[] = $trendMap[$monthKey]['raised'] ?? 0;
+        $inProgressTrendData[] = $trendMap[$monthKey]['in_progress'] ?? 0;
+        $closedTrendData[] = $trendMap[$monthKey]['closed'] ?? 0;
+    }
 } catch (Throwable $e) {
     $totalRequests = 0;
     $closedRequests = 0;
     $openRequests = 0;
     $inProgressRequests = 0;
+    $currentMonth = new DateTimeImmutable('first day of this month');
+    for ($offset = 11; $offset >= 0; $offset--) {
+        $monthDate = $currentMonth->modify("-{$offset} months");
+        $trendLabels[] = $monthDate->format('M Y');
+        $raisedTrendData[] = 0;
+        $inProgressTrendData[] = 0;
+        $closedTrendData[] = 0;
+    }
 }
 
 render_admin_header('Dashboard', [], 'dashboard');
@@ -47,6 +90,11 @@ render_admin_header('Dashboard', [], 'dashboard');
 <style>
     .page-title-box {
         padding-bottom: 0 !important;
+    }
+    .request-trend-card .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid #eef2f7;
+        padding-bottom: 0.75rem;
     }
 </style>
 
@@ -121,5 +169,133 @@ render_admin_header('Dashboard', [], 'dashboard');
         </div>
     </div>
 </div>
+<div class="row">
+    <div class="col-12">
+        <div class="card request-trend-card">
+            <div class="card-body">
+                <div class="card-header px-0 pt-0 mb-3">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between">
+                        <div>
+                            <h4 class="card-title mb-1">Request Trend</h4>
+                            <p class="text-muted mb-0">Monthly status-wise trend of citizen requests.</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="request-trend-chart" class="apex-charts" dir="ltr"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartElement = document.querySelector('#request-trend-chart');
+
+        if (!chartElement || typeof ApexCharts === 'undefined') {
+            return;
+        }
+
+        const requestTrendOptions = {
+            series: [
+                {
+                    name: 'Raised (Open)',
+                    data: <?php echo json_encode($raisedTrendData, JSON_UNESCAPED_SLASHES); ?>
+                },
+                {
+                    name: 'In Progress',
+                    data: <?php echo json_encode($inProgressTrendData, JSON_UNESCAPED_SLASHES); ?>
+                },
+                {
+                    name: 'Closed',
+                    data: <?php echo json_encode($closedTrendData, JSON_UNESCAPED_SLASHES); ?>
+                }
+            ],
+            chart: {
+                height: 320,
+                type: 'area',
+                toolbar: {
+                    show: false
+                },
+                zoom: {
+                    enabled: false
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 3
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.32,
+                    opacityTo: 0.08,
+                    stops: [0, 90, 100]
+                }
+            },
+            colors: ['#9242E3', '#F6AF2E', '#16A34A'],
+            markers: {
+                size: 0,
+                hover: {
+                    size: 5
+                }
+            },
+            xaxis: {
+                categories: <?php echo json_encode($trendLabels, JSON_UNESCAPED_SLASHES); ?>,
+                axisBorder: {
+                    show: false
+                },
+                axisTicks: {
+                    show: false
+                }
+            },
+            yaxis: {
+                min: 0,
+                forceNiceScale: true,
+                labels: {
+                    formatter: function (value) {
+                        return Math.round(value);
+                    }
+                }
+            },
+            grid: {
+                borderColor: '#f1f1f1',
+                strokeDashArray: 3
+            },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'right'
+            },
+            tooltip: {
+                shared: true,
+                intersect: false
+            },
+            responsive: [
+                {
+                    breakpoint: 768,
+                    options: {
+                        chart: {
+                            height: 280
+                        },
+                        legend: {
+                            position: 'bottom',
+                            horizontalAlign: 'center'
+                        }
+                    }
+                }
+            ],
+            noData: {
+                text: 'No request trend data available'
+            }
+        };
+
+        const requestTrendChart = new ApexCharts(chartElement, requestTrendOptions);
+        requestTrendChart.render();
+    });
+</script>
 <?php
-render_admin_footer();
+render_admin_footer([
+    app_asset('assets/libs/apexcharts/apexcharts.min.js'),
+]);

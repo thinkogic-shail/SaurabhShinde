@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             .login-visual-panel .authentication-bg {
                 min-height: 100vh;
-                background-image: url('uploads/login-side-panel.jpg');
+                background-image: url('uploads/admin-login-side-panel.png');
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
