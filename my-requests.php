@@ -35,6 +35,7 @@ render_admin_header('My Requests', [
     app_asset('assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css'),
     app_asset('assets/libs/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css'),
     app_asset('assets/libs/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css'),
+    app_asset('assets/libs/bootstrap-datepicker/css/bootstrap-datepicker.min.css'),
 ], 'my-requests', false);
 ?>
 <style>
@@ -45,6 +46,19 @@ render_admin_header('My Requests', [
     .dataTables_paginate .page-link {
         padding: 0.25rem 0.5rem !important;
         font-size: 0.875rem !important;
+    }
+    #filter-date-range .input-group-text {
+        background-color: #fff;
+        border-left: 0;
+        border-right: 0;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
+    #filter-date-range #filter-date-from {
+        border-right: 0;
+    }
+    #filter-date-range #filter-date-to {
+        border-left: 0;
     }
 </style>
 <div class="row">
@@ -81,13 +95,11 @@ render_admin_header('My Requests', [
 
                 <div class="row mb-3 align-items-end">
                     <div class="col">
-                       <!-- <label class="form-label" for="custom-search"></label>-->
-
-                        <div class="search-box">
-                            <div class="position-relative">
-                                <input type="search" id="custom-search" class="form-control rounded" placeholder="Search...">
-                                <i class="ri-search-line search-icon"></i>
-                            </div>
+                        <label class="form-label" for="filter-date-range">Date Range</label>
+                        <div class="input-daterange input-group" id="filter-date-range">
+                            <input type="text" id="filter-date-from" class="form-control" placeholder="From Date" readonly>
+                            <span class="input-group-text">-</span>
+                            <input type="text" id="filter-date-to" class="form-control" placeholder="To Date" readonly>
                         </div>
                     </div>
                     <div class="col">
@@ -125,6 +137,15 @@ render_admin_header('My Requests', [
                                 <option value="<?php echo htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); ?></option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                    <div class="col">
+                       <!-- <label class="form-label" for="custom-search"></label>-->
+                        <div class="search-box">
+                            <div class="position-relative">
+                                <input type="search" id="custom-search" class="form-control rounded" placeholder="Search...">
+                                <i class="ri-search-line search-icon"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -210,11 +231,54 @@ render_admin_header('My Requests', [
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const tableElement = document.getElementById('my-requests-table');
+        const dateFromInput = document.getElementById('filter-date-from');
+        const dateToInput = document.getElementById('filter-date-to');
         const myRequestsTable = $('#my-requests-table').DataTable({
             responsive: true,
             pageLength: 10,
             lengthChange: false,
             order: [[7, 'desc']]
+        });
+
+        $.fn.dataTable.ext.search.push(function(settings, data) {
+            if (settings.nTable !== tableElement) {
+                return true;
+            }
+
+            const fromValue = dateFromInput.value.trim();
+            const toValue = dateToInput.value.trim();
+            const rowDate = new Date((data[7] || '').replace(' ', 'T'));
+
+            if (Number.isNaN(rowDate.getTime())) {
+                return true;
+            }
+
+            if (fromValue !== '') {
+                const fromDate = new Date(fromValue + 'T00:00:00');
+
+                if (!Number.isNaN(fromDate.getTime()) && rowDate < fromDate) {
+                    return false;
+                }
+            }
+
+            if (toValue !== '') {
+                const toDate = new Date(toValue + 'T23:59:59');
+
+                if (!Number.isNaN(toDate.getTime()) && rowDate > toDate) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        $('#filter-date-range').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true
+        }).on('changeDate clearDate', function() {
+            myRequestsTable.draw();
         });
 
         $('.dataTables_filter').hide();
@@ -239,10 +303,15 @@ render_admin_header('My Requests', [
             var val = $.fn.dataTable.util.escapeRegex($(this).val());
             myRequestsTable.column(6).search(val ? val : '', true, false).draw();
         });
+
+        $('#filter-date-from, #filter-date-to').on('keydown paste', function(event) {
+            event.preventDefault();
+        });
     });
 </script>
 <?php
 render_admin_footer([
+    app_asset('assets/libs/bootstrap-datepicker/js/bootstrap-datepicker.min.js'),
     app_asset('assets/libs/datatables.net/js/jquery.dataTables.min.js'),
     app_asset('assets/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js'),
     app_asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js'),

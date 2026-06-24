@@ -8,13 +8,20 @@ require_admin_login();
 $pdo = app_pdo();
 $userId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $isEditMode = $userId > 0;
-$roles = $pdo->query('SELECT RoleId, RoleName FROM RoleMaster WHERE IsActive = 1 ORDER BY RoleName ASC')->fetchAll();
+$defaultRoleIdStmt = $pdo->query(
+    "SELECT RoleId
+     FROM RoleMaster
+     WHERE IsActive = 1
+       AND LOWER(TRIM(RoleName)) = 'admin'
+     LIMIT 1"
+);
+$defaultRoleId = (int) $defaultRoleIdStmt->fetchColumn();
 $user = [
     'UserName' => '',
     'UserPassword' => '',
     'MobileNo' => '',
     'Email' => '',
-    'RoleId' => '',
+    'RoleId' => $defaultRoleId > 0 ? (string) $defaultRoleId : '',
     'IsMobileVerified' => '0',
     'IsActive' => '1',
 ];
@@ -54,11 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user['UserPassword'] = (string) ($_POST['user_password'] ?? '');
     $user['MobileNo'] = trim($_POST['mobile_no'] ?? '');
     $user['Email'] = trim($_POST['email'] ?? '');
-    $user['RoleId'] = trim((string) ($_POST['role_id'] ?? ''));
     $user['IsMobileVerified'] = (string) ($_POST['is_mobile_verified'] ?? '0');
     $user['IsActive'] = (string) ($_POST['is_active'] ?? '1');
-
-    $validRoleIds = array_map(static fn(array $role): string => (string) $role['RoleId'], $roles);
 
     if ($user['UserName'] === '') {
         $errors['UserName'] = 'Username is required.';
@@ -84,16 +88,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['Email'] = 'Email address must be 200 characters or fewer.';
     }
 
-    if ($user['RoleId'] === '' || !in_array($user['RoleId'], $validRoleIds, true)) {
-        $errors['RoleId'] = 'Please select a valid role.';
-    }
-
     if (!in_array($user['IsMobileVerified'], ['0', '1'], true)) {
         $errors['IsMobileVerified'] = 'Please select mobile verification status.';
     }
 
     if (!in_array($user['IsActive'], ['0', '1'], true)) {
         $errors['IsActive'] = 'Please select a valid status.';
+    }
+
+    if ($errors === []) {
+        if (!$isEditMode && $defaultRoleId <= 0) {
+            $errors['RoleId'] = 'No active role is available for new users.';
+        }
     }
 
     if ($errors === []) {
@@ -207,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'user_password' => password_hash($user['UserPassword'], PASSWORD_DEFAULT),
                 'mobile_no' => $user['MobileNo'],
                 'email' => $user['Email'],
-                'role_id' => (int) $user['RoleId'],
+                'role_id' => $defaultRoleId,
                 'is_mobile_verified' => (int) $user['IsMobileVerified'],
                 'is_active' => (int) $user['IsActive'],
             ]);
@@ -342,36 +348,6 @@ render_admin_header($pageTitle, [], 'user', false);
                             </div>
                         </div>
                     </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="user-form-field">
-                                <label for="role_id" class="form-label">Role</label>
-                                <select
-                                    class="form-select<?php echo isset($errors['RoleId']) ? ' is-invalid' : ''; ?>"
-                                    id="role_id"
-                                    name="role_id"
-                                    required
-                                    data-parsley-required-message="Role is required."
-                                >
-                                    <option value="">Select Role</option>
-                                    <?php foreach ($roles as $role): ?>
-                                        <option
-                                            value="<?php echo (int) $role['RoleId']; ?>"
-                                            <?php echo $user['RoleId'] === (string) $role['RoleId'] ? 'selected' : ''; ?>
-                                        >
-                                            <?php echo htmlspecialchars($role['RoleName'], ENT_QUOTES, 'UTF-8'); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <?php if (isset($errors['RoleId'])): ?>
-                                    <div class="invalid-feedback"><?php echo htmlspecialchars($errors['RoleId'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-
-
 
                     <div class="mb-0">
                         <button type="submit" class="btn btn-primary waves-effect waves-light me-1" style="background-color: #002253; border-color: #002253;">

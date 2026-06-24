@@ -54,6 +54,11 @@ function render_admin_header(string $title, array $extraCss = [], string $active
     <link href="<?php echo htmlspecialchars($css, ENT_QUOTES, 'UTF-8'); ?>" rel="stylesheet" type="text/css">
 <?php endforeach; ?>
     <style>
+        .btn-secondary {
+            background-color: #E24949 !important;
+            border-color: #E24949 !important;
+            color: #fff !important;
+        }
         body,
         .page-content,
         #layout-wrapper {

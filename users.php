@@ -27,9 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 
 $flash = get_flash_message();
 $users = $pdo->query(
-    'SELECT e.EmployeeId, e.UserName, e.MobileNo, e.Email, e.IsMobileVerified, e.IsActive, rm.RoleName
+    'SELECT e.EmployeeId, e.UserName, e.MobileNo, e.Email, e.IsMobileVerified, e.IsActive
      FROM Employee e
-     LEFT JOIN RoleMaster rm ON rm.RoleId = e.RoleId
      WHERE e.IsActive = 1
      ORDER BY e.EmployeeId DESC'
 )->fetchAll();
@@ -103,8 +102,6 @@ render_admin_header('User Management', [
                                 <th>Username</th>
                                 <th>Mobile Number</th>
                                 <th>Email</th>
-                                <th>Role</th>
-
                                 <th>Status</th>
                                 <th style="width: 140px;">Action</th>
                             </tr>
@@ -114,10 +111,8 @@ render_admin_header('User Management', [
                                 <?php
                                 $fullUserName = (string) $user['UserName'];
                                 $fullEmail = (string) ($user['Email'] ?? '');
-                                $fullRole = (string) ($user['RoleName'] ?? '');
                                 $displayUserName = mb_strlen($fullUserName) > 20 ? mb_substr($fullUserName, 0, 20) . '...' : $fullUserName;
                                 $displayEmail = mb_strlen($fullEmail) > 25 ? mb_substr($fullEmail, 0, 25) . '...' : $fullEmail;
-                                $displayRole = mb_strlen($fullRole) > 20 ? mb_substr($fullRole, 0, 20) . '...' : $fullRole;
                                 ?>
                                 <tr>
                                     <td title="<?php echo htmlspecialchars($fullUserName, ENT_QUOTES, 'UTF-8'); ?>">
@@ -127,10 +122,6 @@ render_admin_header('User Management', [
                                     <td title="<?php echo htmlspecialchars($fullEmail, ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php echo htmlspecialchars($displayEmail, ENT_QUOTES, 'UTF-8'); ?>
                                     </td>
-                                    <td title="<?php echo htmlspecialchars($fullRole, ENT_QUOTES, 'UTF-8'); ?>">
-                                        <?php echo htmlspecialchars($displayRole, ENT_QUOTES, 'UTF-8'); ?>
-                                    </td>
-
                                     <td>
                                         <?php if ((int) $user['IsActive'] === 1): ?>
                                             <span class="badge rounded-pill bg-success">Active</span>
