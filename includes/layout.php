@@ -205,6 +205,7 @@ function render_admin_header(string $title, array $extraCss = [], string $active
                         </button>
                         <div class="dropdown-menu dropdown-menu-end profile-menu">
                             <a class="dropdown-item" href="my-profile.php"><i class="ri-user-line align-middle me-1"></i> Profile</a>
+                            <a class="dropdown-item" href="change-password.php"><i class="ri-lock-password-line align-middle me-1"></i> Change Password</a>
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item text-danger" href="logout.php"><i class="ri-shut-down-line align-middle me-1 text-danger"></i> Logout</a>
                         </div>
@@ -251,6 +252,13 @@ function render_admin_header(string $title, array $extraCss = [], string $active
                             <a href="request-types.php" class="waves-effect <?php echo is_link_active('request-type', $activeMenu); ?>">
                                 <i class="ri-file-list-3-line"></i>
                                 <span>Request Type</span>
+                            </a>
+                        </li>
+
+                        <li class="<?php echo is_menu_active('user', $activeMenu); ?>">
+                            <a href="users.php" class="waves-effect <?php echo is_link_active('user', $activeMenu); ?>">
+                                <i class="ri-user-settings-line"></i>
+                                <span>User</span>
                             </a>
                         </li>
 

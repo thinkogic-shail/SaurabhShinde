@@ -192,8 +192,11 @@ render_admin_header('My Profile', [], 'my-profile', false);
 
                     <div class="mb-0">
                         <button type="submit" class="btn btn-primary waves-effect waves-light me-1" style="background-color: #002253; border-color: #002253;">
-                            Save Profile
+                            Update Profile
                         </button>
+                        <a href="dashboard.php" class="btn btn-secondary waves-effect">
+                            Cancel
+                        </a>
                     </div>
                 </form>
             </div>

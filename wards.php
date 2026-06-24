@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 }
 
 $flash = get_flash_message();
-$wards = $pdo->query('SELECT WardId, WardName, IsActive FROM Ward ORDER BY WardId DESC')->fetchAll();
+$wards = $pdo->query('SELECT WardId, WardName, IsActive FROM Ward WHERE IsActive = 1 ORDER BY WardId DESC')->fetchAll();
 
 render_admin_header('Ward Master', [
     app_asset('assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css'),
@@ -127,13 +127,17 @@ render_admin_header('Ward Master', [
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <a href="ward-form.php?id=<?php echo (int) $ward['WardId']; ?>" class="btn btn-sm" style="background-color: #002253; border-color: #002253; color: white;">
+                                            <?php
+                                            $isActive = (int) $ward['IsActive'] === 1;
+                                            $btnOpacity = $isActive ? '' : ' opacity: 0.5; pointer-events: none;';
+                                            ?>
+                                            <a href="<?php echo $isActive ? 'ward-form.php?id=' . (int) $ward['WardId'] : '#'; ?>" class="btn btn-sm<?php echo $isActive ? '' : ' disabled'; ?>" style="background-color: #002253; border-color: #002253; color: white;<?php echo $btnOpacity; ?>">
                                                 <i class="ri-edit-2-line align-middle me-1"></i> Edit
                                             </a>
                                             <form method="POST" action="" class="m-0 delete-ward-form">
                                                 <input type="hidden" name="action" value="delete">
                                                 <input type="hidden" name="ward_id" value="<?php echo (int) $ward['WardId']; ?>">
-                                                <button type="submit" class="btn btn-sm" style="background-color: #dc3545; border-color: #dc3545; color: white;">
+                                                <button type="submit" class="btn btn-sm" style="background-color: #dc3545; border-color: #dc3545; color: white;<?php echo $btnOpacity; ?>" <?php echo $isActive ? '' : 'disabled'; ?>>
                                                     <i class="ri-delete-bin-line align-middle me-1"></i> Delete
                                                 </button>
                                             </form>

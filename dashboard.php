@@ -10,7 +10,6 @@ $totalRequests = 0;
 $closedRequests = 0;
 $openRequests = 0;
 $inProgressRequests = 0;
-$declinedRequests = 0;
 
 try {
     $pdo = app_pdo();
@@ -19,7 +18,7 @@ try {
         "SELECT COUNT(*)
          FROM CitizenRequest cr
          INNER JOIN RequestStatusMaster rsm ON rsm.RequestStatusId = cr.RequestStatusId
-         WHERE TRIM(LOWER(rsm.StatusName)) = 'completed'"
+         WHERE TRIM(LOWER(rsm.StatusName)) IN ('completed', 'declined')"
     );
     $closedRequests = (int) $closedRequestsStmt->fetchColumn();
     $openRequestsStmt = $pdo->query(
@@ -36,19 +35,11 @@ try {
          WHERE TRIM(LOWER(rsm.StatusName)) = 'in progress'"
     );
     $inProgressRequests = (int) $inProgressRequestsStmt->fetchColumn();
-    $declinedRequestsStmt = $pdo->query(
-        "SELECT COUNT(*)
-         FROM CitizenRequest cr
-         INNER JOIN RequestStatusMaster rsm ON rsm.RequestStatusId = cr.RequestStatusId
-         WHERE TRIM(LOWER(rsm.StatusName)) = 'declined'"
-    );
-    $declinedRequests = (int) $declinedRequestsStmt->fetchColumn();
 } catch (Throwable $e) {
     $totalRequests = 0;
     $closedRequests = 0;
     $openRequests = 0;
     $inProgressRequests = 0;
-    $declinedRequests = 0;
 }
 
 render_admin_header('Dashboard', [], 'dashboard');
@@ -122,21 +113,6 @@ render_admin_header('Dashboard', [], 'dashboard');
                 <p class="text-white mb-0" style="font-size: 15px; position: relative; z-index: 2;">In progress Requests</p>
                 <div class="position-absolute" style="top: 15px; right: 20px; z-index: 1;">
                     <i class="ri-loader-4-line text-white" style="font-size: 70px; opacity: 0.4;"></i>
-                </div>
-            </div>
-            <a href="my-requests.php" class="d-block text-center text-white py-1" style="background-color: rgba(0,0,0,0.1); text-decoration: none; font-size: 13px;">
-                More info <i class="mdi mdi-arrow-right-circle ms-1"></i>
-            </a>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card" style="background-color: #E24949; border: none; border-radius: 0.25rem;">
-            <div class="card-body position-relative p-4">
-                <h3 class="text-white fw-bold mb-1" style="font-size: 38px; position: relative; z-index: 2;"><?php echo number_format($declinedRequests); ?></h3>
-                <p class="text-white mb-0" style="font-size: 15px; position: relative; z-index: 2;">Declined Requests</p>
-                <div class="position-absolute" style="top: 15px; right: 20px; z-index: 1;">
-                    <i class="ri-close-circle-line text-white" style="font-size: 70px; opacity: 0.4;"></i>
                 </div>
             </div>
             <a href="my-requests.php" class="d-block text-center text-white py-1" style="background-color: rgba(0,0,0,0.1); text-decoration: none; font-size: 13px;">

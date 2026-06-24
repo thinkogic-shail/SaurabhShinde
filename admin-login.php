@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
 
                 $sql = sprintf(
-                    'SELECT `%s`, `%s` FROM `%s` WHERE `%s` = :mobile LIMIT 1',
+                    'SELECT `%s`, `%s` FROM `%s` WHERE `%s` = :mobile AND IsActive = 1 LIMIT 1',
                     $idColumn,
                     $passwordColumn,
                     $table,
@@ -98,15 +98,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- App Css-->
         <link href="themesdesign.in/nazox/layouts/assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
         <style>
+            .auth-body-bg,
+            body {
+                background:
+                    radial-gradient(circle at top left, rgba(232, 199, 163, 0.35) 0%, rgba(232, 199, 163, 0) 42%),
+                    linear-gradient(135deg, #f4eadc 0%, #f8f2ea 36%, #fbf7f2 100%) !important;
+            }
             .error-message {
                 color: #dc3545;
                 font-size: 0.875rem;
                 margin-top: 0.4rem;
                 display: none;
             }
+            .authentication-page-content {
+                background:
+                    radial-gradient(circle at top left, rgba(232, 199, 163, 0.45) 0%, rgba(232, 199, 163, 0) 38%),
+                    linear-gradient(135deg, #f4eadc 0%, #f8f2ea 36%, #fbf7f2 100%);
+            }
             .login-visual-panel .authentication-bg {
                 min-height: 100vh;
-                background-image: url('uploads/login-side-panel.png');
+                background-image: url('uploads/login-side-panel.jpg');
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;

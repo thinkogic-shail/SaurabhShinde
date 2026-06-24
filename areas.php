@@ -34,6 +34,7 @@ $areas = $pdo->query(
     'SELECT a.AreaId, a.AreaName, a.IsActive, w.WardName
      FROM Area a
      INNER JOIN Ward w ON w.WardId = a.WardId
+     WHERE a.IsActive = 1
      ORDER BY a.AreaId DESC'
 )->fetchAll();
 
@@ -134,13 +135,17 @@ render_admin_header('Area Master', [
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <a href="area-form.php?id=<?php echo (int) $area['AreaId']; ?>" class="btn btn-sm" style="background-color: #002253; border-color: #002253; color: white;">
+                                            <?php
+                                            $isActive = (int) $area['IsActive'] === 1;
+                                            $btnOpacity = $isActive ? '' : ' opacity: 0.5; pointer-events: none;';
+                                            ?>
+                                            <a href="<?php echo $isActive ? 'area-form.php?id=' . (int) $area['AreaId'] : '#'; ?>" class="btn btn-sm<?php echo $isActive ? '' : ' disabled'; ?>" style="background-color: #002253; border-color: #002253; color: white;<?php echo $btnOpacity; ?>">
                                                 <i class="ri-edit-2-line align-middle me-1"></i> Edit
                                             </a>
                                             <form method="POST" action="" class="m-0 delete-area-form">
                                                 <input type="hidden" name="action" value="delete">
                                                 <input type="hidden" name="area_id" value="<?php echo (int) $area['AreaId']; ?>">
-                                                <button type="submit" class="btn btn-sm" style="background-color: #dc3545; border-color: #dc3545; color: white;">
+                                                <button type="submit" class="btn btn-sm" style="background-color: #dc3545; border-color: #dc3545; color: white;<?php echo $btnOpacity; ?>" <?php echo $isActive ? '' : 'disabled'; ?>>
                                                     <i class="ri-delete-bin-line align-middle me-1"></i> Delete
                                                 </button>
                                             </form>
