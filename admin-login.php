@@ -110,6 +110,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 margin-top: 0.4rem;
                 display: none;
             }
+            .login-form-label {
+                color: #ffffff;
+                display: inline-block;
+                margin-bottom: 0.5rem;
+                position: static !important;
+                transform: none !important;
+                top: auto !important;
+                left: auto !important;
+                background: transparent !important;
+                padding: 0 !important;
+                width: auto !important;
+                z-index: auto !important;
+            }
+            .auth-form-group-custom {
+                position: relative !important;
+            }
+            .auth-form-group-custom .form-control {
+                height: 58px !important;
+                padding-left: 3rem !important;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+                line-height: 58px !important;
+            }
+            .auth-form-group-custom .auti-custom-input-icon {
+                top: calc(100% - 29px) !important;
+                left: 1rem !important;
+                transform: translateY(-50%) !important;
+                z-index: 2 !important;
+                line-height: 1 !important;
+                font-size: 1.2rem !important;
+            }
+            .authentication-page-content .mt-5 {
+                margin-top: 2rem !important;
+            }
+            .authentication-page-content .mt-5.text-center.text-white p {
+                font-size: 0.7rem !important;
+                margin-bottom: 0 !important;
+            }
             .authentication-page-content {
                 background: #002253;
             }
@@ -138,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <div class="text-center">
                                                 <div>
                                                     <a href="#" class="authentication-logo">
-                                                        <img src="uploads/admin-login-logo.svg" alt="Saurabh Shinde Foundation Logo" height="92" class="auth-logo mx-auto">
+                                                        <img src="uploads/admin-login-logo-v2.svg" alt="Saurabh Shinde Foundation Logo" height="120" class="auth-logo mx-auto">
                                                     </a>
                                                 </div>
     
@@ -157,14 +195,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                                                     <div class="mb-3 auth-form-group-custom mb-4">
                                                         <i class="ri-phone-line auti-custom-input-icon"></i>
-                                                        <label for="mobile" class="fw-semibold">Mobile Number</label>
+                                                        <label for="mobile" class="fw-semibold login-form-label">Mobile Number</label>
                                                         <input type="text" class="form-control" id="mobile" name="mobile" placeholder="Enter 10-digit mobile number" value="<?php echo htmlspecialchars($mobile, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off">
                                                         <div id="mobileError" class="error-message">Valid 10-digit mobile number is required.</div>
                                                     </div>
                             
                                                     <div class="mb-3 auth-form-group-custom mb-4">
                                                         <i class="ri-lock-2-line auti-custom-input-icon"></i>
-                                                        <label for="password" class="fw-semibold">Password</label>
+                                                        <label for="password" class="fw-semibold login-form-label">Password</label>
                                                         <input type="password" class="form-control" id="password" name="password" placeholder="Enter password">
                                                         <div id="passwordError" class="error-message">Password is required.</div>
                                                     </div>
