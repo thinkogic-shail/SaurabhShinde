@@ -239,45 +239,49 @@ function render_admin_header(string $title, array $extraCss = [], string $active
                             </a>
                         </li>
 
-                        <li class="<?php echo is_menu_active('ward', $activeMenu); ?>">
-                            <a href="wards.php" class="waves-effect <?php echo is_link_active('ward', $activeMenu); ?>">
-                                <i class="ri-map-pin-2-line"></i>
-                                <span>Ward</span>
+                        <li class="<?php echo in_array($activeMenu, ['ward', 'area', 'age-category', 'request-type', 'foundation-banner']) ? 'mm-active' : ''; ?>">
+                            <a href="javascript: void(0);" class="has-arrow waves-effect">
+                                <i class="ri-settings-3-line"></i>
+                                <span>Configuration</span>
                             </a>
-                        </li>
-
-                        <li class="<?php echo is_menu_active('area', $activeMenu); ?>">
-                            <a href="areas.php" class="waves-effect <?php echo is_link_active('area', $activeMenu); ?>">
-                                <i class="ri-road-map-line"></i>
-                                <span>Area</span>
-                            </a>
-                        </li>
-
-                        <li class="<?php echo is_menu_active('age-category', $activeMenu); ?>">
-                            <a href="age-categories.php" class="waves-effect <?php echo is_link_active('age-category', $activeMenu); ?>">
-                                <i class="ri-user-star-line"></i>
-                                <span>Age Category</span>
-                            </a>
-                        </li>
-
-                        <li class="<?php echo is_menu_active('request-type', $activeMenu); ?>">
-                            <a href="request-types.php" class="waves-effect <?php echo is_link_active('request-type', $activeMenu); ?>">
-                                <i class="ri-file-list-3-line"></i>
-                                <span>Request Type</span>
-                            </a>
+                            <ul class="sub-menu" aria-expanded="false">
+                                <li class="<?php echo is_menu_active('ward', $activeMenu); ?>">
+                                    <a href="wards.php" class="<?php echo is_link_active('ward', $activeMenu); ?>">
+                                        <i class="ri-map-pin-2-line"></i>
+                                        <span>Ward</span>
+                                    </a>
+                                </li>
+                                <li class="<?php echo is_menu_active('area', $activeMenu); ?>">
+                                    <a href="areas.php" class="<?php echo is_link_active('area', $activeMenu); ?>">
+                                        <i class="ri-road-map-line"></i>
+                                        <span>Area</span>
+                                    </a>
+                                </li>
+                                <li class="<?php echo is_menu_active('age-category', $activeMenu); ?>">
+                                    <a href="age-categories.php" class="<?php echo is_link_active('age-category', $activeMenu); ?>">
+                                        <i class="ri-user-star-line"></i>
+                                        <span>Age Category</span>
+                                    </a>
+                                </li>
+                                <li class="<?php echo is_menu_active('request-type', $activeMenu); ?>">
+                                    <a href="request-types.php" class="<?php echo is_link_active('request-type', $activeMenu); ?>">
+                                        <i class="ri-file-list-3-line"></i>
+                                        <span>Request Type</span>
+                                    </a>
+                                </li>
+                                <li class="<?php echo is_menu_active('foundation-banner', $activeMenu); ?>">
+                                    <a href="foundation-banners.php" class="<?php echo is_link_active('foundation-banner', $activeMenu); ?>">
+                                        <i class="ri-image-2-line"></i>
+                                        <span>Foundation Banner</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
 
                         <li class="<?php echo is_menu_active('user', $activeMenu); ?>">
                             <a href="users.php" class="waves-effect <?php echo is_link_active('user', $activeMenu); ?>">
                                 <i class="ri-user-settings-line"></i>
                                 <span>User</span>
-                            </a>
-                        </li>
-
-                        <li class="<?php echo is_menu_active('foundation-banner', $activeMenu); ?>">
-                            <a href="foundation-banners.php" class="waves-effect <?php echo is_link_active('foundation-banner', $activeMenu); ?>">
-                                <i class="ri-image-2-line"></i>
-                                <span>Foundation Banner</span>
                             </a>
                         </li>
 
