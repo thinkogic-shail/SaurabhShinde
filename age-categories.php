@@ -78,7 +78,7 @@ render_admin_header('Age Category Master', [
                         <h4 class="mb-1">Age Category Master</h4>
                         <div>
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="age-categories.php">Configuration</a></li>
                                 <li class="breadcrumb-item active">Age Category Master</li>
                             </ol>
                         </div>

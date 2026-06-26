@@ -83,7 +83,7 @@ render_admin_header('Foundation Banner Management', [
                         <h4 class="mb-1">Foundation Banner Management</h4>
                         <div>
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="foundation-banners.php">Configuration</a></li>
                                 <li class="breadcrumb-item active">Foundation Banner Management</li>
                             </ol>
                         </div>

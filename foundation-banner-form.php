@@ -175,7 +175,7 @@ render_admin_header($pageTitle, [], 'foundation-banner', false);
                         <h4 class="mb-1"><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></h4>
                         <div>
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="foundation-banners.php">Configuration</a></li>
                                 <li class="breadcrumb-item"><a href="foundation-banners.php">Foundation Banner Management</a></li>
                                 <li class="breadcrumb-item active"><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></li>
                             </ol>

@@ -78,7 +78,7 @@ render_admin_header('Request Type Master', [
                         <h4 class="mb-1">Request Type Master</h4>
                         <div>
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="request-types.php">Configuration</a></li>
                                 <li class="breadcrumb-item active">Request Type Master</li>
                             </ol>
                         </div>

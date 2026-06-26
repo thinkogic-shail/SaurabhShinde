@@ -73,7 +73,7 @@ render_admin_header('Ward Master', [
                         <h4 class="mb-1">Ward Master</h4>
                         <div>
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="wards.php">Configuration</a></li>
                                 <li class="breadcrumb-item active">Ward Master</li>
                             </ol>
                         </div>
