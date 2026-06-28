@@ -30,8 +30,32 @@ function normalize_date_value(mixed $value): ?string
     return $date !== false && $date->format('Y-m-d') === $value ? $value : null;
 }
 
+function parse_date_range(mixed $dateRange): array
+{
+    $fromDate = null;
+    $toDate = null;
+
+    if (is_array($dateRange)) {
+        $fromDate = normalize_date_value($dateRange['FromDate'] ?? $dateRange['from_date'] ?? $dateRange['from'] ?? null);
+        $toDate = normalize_date_value($dateRange['ToDate'] ?? $dateRange['to_date'] ?? $dateRange['to'] ?? null);
+    } elseif (is_string($dateRange)) {
+        $dateRange = trim($dateRange);
+
+        if ($dateRange !== '') {
+            $parts = preg_split('/\s*-\s*/', $dateRange);
+
+            if (is_array($parts) && count($parts) === 2) {
+                $fromDate = normalize_date_value($parts[0]);
+                $toDate = normalize_date_value($parts[1]);
+            }
+        }
+    }
+
+    return [$fromDate, $toDate];
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    send_json_response(405, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Only POST method is allowed.',
     ]);
@@ -41,77 +65,62 @@ $rawInput = file_get_contents('php://input');
 $decodedInput = json_decode($rawInput ?: '', true);
 
 if (!is_array($decodedInput)) {
-    send_json_response(400, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Invalid JSON input.',
     ]);
 }
 
-$requestStatusId = isset($decodedInput['RequestStatusId']) && $decodedInput['RequestStatusId'] !== null
-    ? (int) $decodedInput['RequestStatusId']
-    : 0;
-$fromDate = normalize_date_value($decodedInput['FromDate'] ?? $decodedInput['from_date'] ?? null);
-$toDate = normalize_date_value($decodedInput['ToDate'] ?? $decodedInput['to_date'] ?? null);
+$requestType = (int) ($decodedInput['RequestType'] ?? 0);
 
-if ((array_key_exists('FromDate', $decodedInput) || array_key_exists('from_date', $decodedInput)) && $fromDate === null) {
-    send_json_response(422, [
+[$fromDate, $toDate] = parse_date_range(
+    $decodedInput['DateRange'] ?? [
+        'FromDate' => $decodedInput['FromDate'] ?? null,
+        'ToDate' => $decodedInput['ToDate'] ?? null,
+    ]
+);
+
+if (!in_array($requestType, [1, 2], true)) {
+    send_json_response(200, [
         'Success' => false,
-        'Message' => 'FromDate must be in YYYY-MM-DD format.',
+        'Message' => 'Invalid RequestType.',
     ]);
 }
 
-if ((array_key_exists('ToDate', $decodedInput) || array_key_exists('to_date', $decodedInput)) && $toDate === null) {
-    send_json_response(422, [
+if (
+    (
+        array_key_exists('DateRange', $decodedInput) ||
+        array_key_exists('FromDate', $decodedInput) ||
+        array_key_exists('ToDate', $decodedInput)
+    )
+    && ($fromDate === null || $toDate === null)
+) {
+    send_json_response(200, [
         'Success' => false,
-        'Message' => 'ToDate must be in YYYY-MM-DD format.',
-    ]);
-}
-
-if (($fromDate === null) !== ($toDate === null)) {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'Both FromDate and ToDate are required to apply date filter.',
+        'Message' => 'FromDate and ToDate must be in YYYY-MM-DD format.',
     ]);
 }
 
 if ($fromDate !== null && $toDate !== null && $fromDate > $toDate) {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
-        'Message' => 'Date range is invalid.',
+        'Message' => 'DateRange is invalid.',
     ]);
 }
 
 try {
     $pdo = app_pdo();
 
-    if ($requestStatusId > 0) {
-        $statusStmt = $pdo->prepare(
-            'SELECT RequestStatusId
-             FROM RequestStatusMaster
-             WHERE RequestStatusId = :request_status_id
-               AND IsActive = 1
-             LIMIT 1'
-        );
-        $statusStmt->execute([
-            'request_status_id' => $requestStatusId,
-        ]);
-
-        if (!$statusStmt->fetch()) {
-            send_json_response(422, [
-                'Success' => false,
-                'Message' => 'Invalid RequestStatusId.',
-            ]);
-        }
-    }
-
     $whereParts = [
         'cr.IsActive = 1',
     ];
+
     $queryParams = [];
 
-    if ($requestStatusId > 0) {
-        $whereParts[] = 'cr.RequestStatusId = :request_status_id';
-        $queryParams['request_status_id'] = $requestStatusId;
+    if ($requestType === 1) {
+        $whereParts[] = 'cr.RequestStatusId IN (1, 2)';
+    } elseif ($requestType === 2) {
+        $whereParts[] = 'cr.RequestStatusId IN (3, 4)';
     }
 
     if ($fromDate !== null && $toDate !== null) {
@@ -123,63 +132,96 @@ try {
     $stmt = $pdo->prepare(
         'SELECT cr.CitizenRequestId,
                 cr.RequestNo,
-                cr.CitizenUserId,
                 cr.RequestTypeId,
                 cr.WardId,
                 cr.AreaId,
-                cr.Address,
-                cr.AadhaarNo,
-                cr.Description,
                 cr.RequestStatusId,
-                cr.Remark,
-                cr.RaisedDate,
-                cr.ClosedDate,
+                cu.Name,
+                cu.MobileNo,
+                cu.Email,
+                cr.AadhaarNo,
                 rtm.RequestTypeName,
                 w.WardName,
                 a.AreaName,
-                rsm.StatusName
+                cr.Address,
+                cr.Description,
+                cr.Remark,
+                rsm.StatusName,
+                cr.RaisedDate,
+                cr.ClosedDate,
+                ra.AttachmentId,
+                ra.FileName,
+                ra.FilePath,
+                ra.UploadedOn
          FROM CitizenRequest cr
+         INNER JOIN CitizenUser cu ON cu.CitizenUserId = cr.CitizenUserId
          LEFT JOIN RequestTypeMaster rtm ON rtm.RequestTypeId = cr.RequestTypeId
          LEFT JOIN Ward w ON w.WardId = cr.WardId
          LEFT JOIN Area a ON a.AreaId = cr.AreaId
          LEFT JOIN RequestStatusMaster rsm ON rsm.RequestStatusId = cr.RequestStatusId
+         LEFT JOIN RequestAttachment ra
+                ON ra.CitizenRequestId = cr.CitizenRequestId
+               AND ra.IsActive = 1
          WHERE ' . implode(' AND ', $whereParts) . '
-         ORDER BY cr.CitizenRequestId DESC'
+         ORDER BY cr.CitizenRequestId DESC, ra.AttachmentId ASC'
     );
+
     $stmt->execute($queryParams);
 
-    $requests = $stmt->fetchAll();
-    $data = [];
+    $rows = $stmt->fetchAll();
+    $requestMap = [];
 
-    foreach ($requests as $request) {
-        $data[] = [
-            'CitizenRequestId' => (int) $request['CitizenRequestId'],
-            'RequestNo' => (string) ($request['RequestNo'] ?? ''),
-            'CitizenUserId' => isset($request['CitizenUserId']) ? (int) $request['CitizenUserId'] : null,
-            'RequestTypeId' => isset($request['RequestTypeId']) ? (int) $request['RequestTypeId'] : null,
-            'RequestTypeName' => (string) ($request['RequestTypeName'] ?? ''),
-            'WardId' => isset($request['WardId']) ? (int) $request['WardId'] : null,
-            'WardName' => (string) ($request['WardName'] ?? ''),
-            'AreaId' => isset($request['AreaId']) ? (int) $request['AreaId'] : null,
-            'AreaName' => (string) ($request['AreaName'] ?? ''),
-            'Address' => (string) ($request['Address'] ?? ''),
-            'AadhaarNo' => (string) ($request['AadhaarNo'] ?? ''),
-            'Description' => (string) ($request['Description'] ?? ''),
-            'RequestStatusId' => isset($request['RequestStatusId']) ? (int) $request['RequestStatusId'] : null,
-            'StatusName' => (string) ($request['StatusName'] ?? ''),
-            'Remark' => (string) ($request['Remark'] ?? ''),
-            'RaisedDate' => (string) ($request['RaisedDate'] ?? ''),
-            'ClosedDate' => (string) ($request['ClosedDate'] ?? ''),
-        ];
+    foreach ($rows as $row) {
+        $citizenRequestId = (int) $row['CitizenRequestId'];
+
+        if (!isset($requestMap[$citizenRequestId])) {
+            $requestMap[$citizenRequestId] = [
+                'CitizenRequestId' => $citizenRequestId,
+                'RequestNo' => (string) ($row['RequestNo'] ?? ''),
+                'WardId' => isset($row['WardId']) ? (int) $row['WardId'] : null,
+                'AreaId' => isset($row['AreaId']) ? (int) $row['AreaId'] : null,
+                'RequestTypeId' => isset($row['RequestTypeId']) ? (int) $row['RequestTypeId'] : null,
+                'RequestStatusId' => isset($row['RequestStatusId']) ? (int) $row['RequestStatusId'] : null,
+                'RequestTypeName' => (string) ($row['RequestTypeName'] ?? ''),
+                'Name' => (string) ($row['Name'] ?? ''),
+                'MobileNo' => (string) ($row['MobileNo'] ?? ''),
+                'Email' => (string) ($row['Email'] ?? ''),
+                
+                
+                'AadhaarNo' => (string) ($row['AadhaarNo'] ?? ''),
+                'WardName' => (string) ($row['WardName'] ?? ''),
+                'AreaName' => (string) ($row['AreaName'] ?? ''),
+                'Address' => (string) ($row['Address'] ?? ''),
+                'Description' => (string) ($row['Description'] ?? ''),
+                'StatusName' => (string) ($row['StatusName'] ?? ''),
+                'Remark' => (string) ($row['Remark'] ?? ''),
+                'RaisedDate' => (string) ($row['RaisedDate'] ?? ''),
+                'ClosedDate' => (string) ($row['ClosedDate'] ?? ''),
+                'Attachments' => [],
+            ];
+        }
+
+        if (!empty($row['AttachmentId'])) {
+            $requestMap[$citizenRequestId]['Attachments'][] = [
+                'AttachmentId' => (int) $row['AttachmentId'],
+                'FileName' => (string) ($row['FileName'] ?? ''),
+                'FilePath' => (string) ($row['FilePath'] ?? ''),
+                'UploadedOn' => (string) ($row['UploadedOn'] ?? ''),
+            ];
+        }
     }
+
+    $data = array_values($requestMap);
 
     send_json_response(200, [
         'Success' => true,
-        'Message' => empty($data) ? 'No active requests found.' : 'Requests fetched successfully.',
+        'Message' => empty($data)
+            ? 'No requests found.'
+            : 'Requests fetched successfully.',
         'Data' => $data,
     ]);
 } catch (Throwable $exception) {
-    send_json_response(500, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Unable to fetch requests.',
     ]);

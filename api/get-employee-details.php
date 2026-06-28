@@ -14,7 +14,7 @@ function send_json_response(int $statusCode, array $payload): void
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    send_json_response(405, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Only POST method is allowed.',
     ]);
@@ -24,7 +24,7 @@ $rawInput = file_get_contents('php://input');
 $decodedInput = json_decode($rawInput ?: '', true);
 
 if (!is_array($decodedInput)) {
-    send_json_response(400, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Invalid JSON input.',
     ]);
@@ -33,14 +33,14 @@ if (!is_array($decodedInput)) {
 $mobileNumber = trim((string) ($decodedInput['mobile_number'] ?? ''));
 
 if ($mobileNumber === '') {
-    send_json_response(422, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Mobile number is required.',
     ]);
 }
 
 if (!preg_match('/^[0-9]{10}$/', $mobileNumber)) {
-    send_json_response(422, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Mobile number must be exactly 10 digits.',
     ]);
@@ -71,7 +71,7 @@ try {
     $employee = $stmt->fetch();
 
     if (!$employee) {
-        send_json_response(404, [
+        send_json_response(200, [
             'success' => false,
             'message' => 'Employee not found.',
         ]);
@@ -93,7 +93,7 @@ try {
         ],
     ]);
 } catch (Throwable $exception) {
-    send_json_response(500, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Unable to fetch employee details.',
     ]);

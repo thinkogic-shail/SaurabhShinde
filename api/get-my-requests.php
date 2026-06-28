@@ -55,7 +55,7 @@ function parse_date_range(mixed $dateRange): array
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    send_json_response(405, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Only POST method is allowed.',
     ]);
@@ -65,32 +65,52 @@ $rawInput = file_get_contents('php://input');
 $decodedInput = json_decode($rawInput ?: '', true);
 
 if (!is_array($decodedInput)) {
-    send_json_response(400, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Invalid JSON input.',
     ]);
 }
 
 $citizenUserId = (int) ($decodedInput['CitizenUserId'] ?? 0);
-$requestStatusId = (int) ($decodedInput['RequestStatusId'] ?? 0);
-[$fromDate, $toDate] = parse_date_range($decodedInput['DateRange'] ?? null);
+$requestType = (int) ($decodedInput['RequestType'] ?? 0);
+
+[$fromDate, $toDate] = parse_date_range(
+    $decodedInput['DateRange'] ?? [
+        'FromDate' => $decodedInput['FromDate'] ?? null,
+        'ToDate' => $decodedInput['ToDate'] ?? null,
+    ]
+);
 
 if ($citizenUserId <= 0) {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'CitizenUserId is required.',
     ]);
 }
 
-if (array_key_exists('DateRange', $decodedInput) && ($fromDate === null || $toDate === null)) {
-    send_json_response(422, [
+if (!in_array($requestType, [1, 2], true)) {
+    send_json_response(200, [
         'Success' => false,
-        'Message' => 'DateRange must be in YYYY-MM-DD - YYYY-MM-DD format.',
+        'Message' => 'Invalid RequestType.',
+    ]);
+}
+
+if (
+    (
+        array_key_exists('DateRange', $decodedInput) ||
+        array_key_exists('FromDate', $decodedInput) ||
+        array_key_exists('ToDate', $decodedInput)
+    )
+    && ($fromDate === null || $toDate === null)
+) {
+    send_json_response(200, [
+        'Success' => false,
+        'Message' => 'FromDate and ToDate must be in YYYY-MM-DD format.',
     ]);
 }
 
 if ($fromDate !== null && $toDate !== null && $fromDate > $toDate) {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'DateRange is invalid.',
     ]);
@@ -99,55 +119,19 @@ if ($fromDate !== null && $toDate !== null && $fromDate > $toDate) {
 try {
     $pdo = app_pdo();
 
-    $citizenStmt = $pdo->prepare(
-        'SELECT CitizenUserId
-         FROM CitizenUser
-         WHERE CitizenUserId = :citizen_user_id
-           AND IsActive = 1
-         LIMIT 1'
-    );
-    $citizenStmt->execute([
-        'citizen_user_id' => $citizenUserId,
-    ]);
-
-    if (!$citizenStmt->fetch()) {
-        send_json_response(404, [
-            'Success' => false,
-            'Message' => 'Citizen not found.',
-        ]);
-    }
-
-    if ($requestStatusId > 0) {
-        $statusStmt = $pdo->prepare(
-            'SELECT RequestStatusId
-             FROM RequestStatusMaster
-             WHERE RequestStatusId = :request_status_id
-               AND IsActive = 1
-             LIMIT 1'
-        );
-        $statusStmt->execute([
-            'request_status_id' => $requestStatusId,
-        ]);
-
-        if (!$statusStmt->fetch()) {
-            send_json_response(422, [
-                'Success' => false,
-                'Message' => 'Invalid RequestStatusId.',
-            ]);
-        }
-    }
-
     $whereParts = [
         'cr.CitizenUserId = :citizen_user_id',
         'cr.IsActive = 1',
     ];
+
     $queryParams = [
         'citizen_user_id' => $citizenUserId,
     ];
 
-    if ($requestStatusId > 0) {
-        $whereParts[] = 'cr.RequestStatusId = :request_status_id';
-        $queryParams['request_status_id'] = $requestStatusId;
+    if ($requestType === 1) {
+        $whereParts[] = 'cr.RequestStatusId IN (1, 2)';
+    } elseif ($requestType === 2) {
+        $whereParts[] = 'cr.RequestStatusId IN (3, 4)';
     }
 
     if ($fromDate !== null && $toDate !== null) {
@@ -163,53 +147,90 @@ try {
                 cr.WardId,
                 cr.AreaId,
                 cr.RequestStatusId,
+                cr.AadhaarNo,
+                cu.Name,
+                cu.MobileNo,
+                cu.Email,
                 rtm.RequestTypeName,
                 w.WardName,
                 a.AreaName,
                 cr.Address,
                 cr.Description,
                 cr.Remark,
+                cr.ClosedDate,
                 rsm.StatusName,
-                cr.RaisedDate
+                cr.RaisedDate,
+                ra.AttachmentId,
+                ra.FileName,
+                ra.FilePath,
+                ra.UploadedOn
          FROM CitizenRequest cr
+         INNER JOIN CitizenUser cu ON cu.CitizenUserId = cr.CitizenUserId
          LEFT JOIN RequestTypeMaster rtm ON rtm.RequestTypeId = cr.RequestTypeId
          LEFT JOIN Ward w ON w.WardId = cr.WardId
          LEFT JOIN Area a ON a.AreaId = cr.AreaId
          LEFT JOIN RequestStatusMaster rsm ON rsm.RequestStatusId = cr.RequestStatusId
+         LEFT JOIN RequestAttachment ra 
+                ON ra.CitizenRequestId = cr.CitizenRequestId
+               AND ra.IsActive = 1
          WHERE ' . implode(' AND ', $whereParts) . '
-         ORDER BY cr.CitizenRequestId DESC'
+         ORDER BY cr.CitizenRequestId DESC, ra.AttachmentId ASC'
     );
+
     $stmt->execute($queryParams);
 
-    $requests = $stmt->fetchAll();
-    $data = [];
+    $rows = $stmt->fetchAll();
+    $requestMap = [];
 
-    foreach ($requests as $request) {
-        $data[] = [
-            'CitizenRequestId' => (int) $request['CitizenRequestId'],
-            'RequestNo' => (string) ($request['RequestNo'] ?? ''),
-            'WardId' => isset($request['WardId']) ? (int) $request['WardId'] : null,
-            'AreaId' => isset($request['AreaId']) ? (int) $request['AreaId'] : null,
-            'RequestTypeId' => isset($request['RequestTypeId']) ? (int) $request['RequestTypeId'] : null,
-            'RequestStatusId' => isset($request['RequestStatusId']) ? (int) $request['RequestStatusId'] : null,
-            'RequestTypeName' => (string) ($request['RequestTypeName'] ?? ''),
-            'WardName' => (string) ($request['WardName'] ?? ''),
-            'AreaName' => (string) ($request['AreaName'] ?? ''),
-            'Address' => (string) ($request['Address'] ?? ''),
-            'Description' => (string) ($request['Description'] ?? ''),
-            'StatusName' => (string) ($request['StatusName'] ?? ''),
-            'Remark' => (string) ($request['Remark'] ?? ''),
-            'RaisedDate' => (string) ($request['RaisedDate'] ?? ''),
-        ];
+    foreach ($rows as $row) {
+        $citizenRequestId = (int) $row['CitizenRequestId'];
+
+        if (!isset($requestMap[$citizenRequestId])) {
+            $requestMap[$citizenRequestId] = [
+                'CitizenRequestId' => $citizenRequestId,
+                'RequestNo' => (string) ($row['RequestNo'] ?? ''),
+                'WardId' => isset($row['WardId']) ? (int) $row['WardId'] : null,
+                'AreaId' => isset($row['AreaId']) ? (int) $row['AreaId'] : null,
+                'RequestTypeId' => isset($row['RequestTypeId']) ? (int) $row['RequestTypeId'] : null,
+                'RequestStatusId' => isset($row['RequestStatusId']) ? (int) $row['RequestStatusId'] : null,
+                'Name' => (string) ($row['Name'] ?? ''),
+                'MobileNo' => (string) ($row['MobileNo'] ?? ''),
+                'Email' => (string) ($row['Email'] ?? ''),
+                'RequestTypeName' => (string) ($row['RequestTypeName'] ?? ''),
+                'AadhaarNo' => (string) ($row['AadhaarNo'] ?? ''),
+                'WardName' => (string) ($row['WardName'] ?? ''),
+                'AreaName' => (string) ($row['AreaName'] ?? ''),
+                'Address' => (string) ($row['Address'] ?? ''),
+                'Description' => (string) ($row['Description'] ?? ''),
+                'StatusName' => (string) ($row['StatusName'] ?? ''),
+                'Remark' => (string) ($row['Remark'] ?? ''),
+                'RaisedDate' => (string) ($row['RaisedDate'] ?? ''),
+                'ClosedDate' => (string) ($row['ClosedDate'] ?? ''),
+                'Attachments' => [],
+            ];
+        }
+
+        if (!empty($row['AttachmentId'])) {
+            $requestMap[$citizenRequestId]['Attachments'][] = [
+                'AttachmentId' => (int) $row['AttachmentId'],
+                'FileName' => (string) ($row['FileName'] ?? ''),
+                'FilePath' => (string) ($row['FilePath'] ?? ''),
+                'UploadedOn' => (string) ($row['UploadedOn'] ?? ''),
+            ];
+        }
     }
+
+    $data = array_values($requestMap);
 
     send_json_response(200, [
         'Success' => true,
-        'Message' => empty($data) ? 'No active requests found for this citizen.' : 'Requests fetched successfully.',
+        'Message' => empty($data)
+            ? 'No requests found for this citizen.'
+            : 'Requests fetched successfully.',
         'Data' => $data,
     ]);
 } catch (Throwable $exception) {
-    send_json_response(500, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Unable to fetch requests.',
     ]);

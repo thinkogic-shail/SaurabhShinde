@@ -14,7 +14,7 @@ function send_json_response(int $statusCode, array $payload): void
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    send_json_response(405, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Only POST method is allowed.',
     ]);
@@ -24,7 +24,7 @@ $rawInput = file_get_contents('php://input');
 $decodedInput = json_decode($rawInput ?: '', true);
 
 if (!is_array($decodedInput)) {
-    send_json_response(400, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Invalid JSON input.',
     ]);
@@ -33,7 +33,7 @@ if (!is_array($decodedInput)) {
 $citizenRequestId = (int) ($decodedInput['CitizenRequestId'] ?? 0);
 
 if ($citizenRequestId <= 0) {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'CitizenRequestId is required.',
     ]);
@@ -75,7 +75,7 @@ try {
     $request = $requestStmt->fetch();
 
     if (!$request) {
-        send_json_response(404, [
+        send_json_response(200, [
             'Success' => false,
             'Message' => 'Request not found.',
         ]);
@@ -126,7 +126,7 @@ try {
         ],
     ]);
 } catch (Throwable $exception) {
-    send_json_response(500, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Unable to fetch request details.',
     ]);

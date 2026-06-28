@@ -14,7 +14,7 @@ function send_json_response(int $statusCode, array $payload): void
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    send_json_response(405, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Only POST method is allowed.',
     ]);
@@ -24,7 +24,7 @@ $rawInput = file_get_contents('php://input');
 $decodedInput = json_decode($rawInput ?: '', true);
 
 if (!is_array($decodedInput)) {
-    send_json_response(400, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Invalid JSON input.',
     ]);
@@ -38,28 +38,28 @@ $genderId = (int) ($decodedInput['GenderId'] ?? 0);
 $ageCategoryId = (int) ($decodedInput['AgeCategoryId'] ?? 0);
 
 if ($mobileNo === '') {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Mobile Number is required.',
     ]);
 }
 
 if (!preg_match('/^[0-9]{10}$/', $mobileNo)) {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Mobile Number must contain exactly 10 digits.',
     ]);
 }
 
 if ($aadhaarNo !== '' && !preg_match('/^[0-9]{12}$/', $aadhaarNo)) {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Aadhaar Number must contain exactly 12 digits.',
     ]);
 }
 
 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Email is invalid.',
     ]);
@@ -79,7 +79,7 @@ try {
     ]);
 
     if ($duplicateMobileStmt->fetch()) {
-        send_json_response(422, [
+        send_json_response(200, [
             'Success' => false,
             'Message' => 'Mobile Number already exists.',
         ]);
@@ -98,7 +98,7 @@ try {
         ]);
 
         if (!$genderStmt->fetch()) {
-            send_json_response(422, [
+            send_json_response(200, [
                 'Success' => false,
                 'Message' => 'Invalid GenderId.',
             ]);
@@ -118,7 +118,7 @@ try {
         ]);
 
         if (!$ageCategoryStmt->fetch()) {
-            send_json_response(422, [
+            send_json_response(200, [
                 'Success' => false,
                 'Message' => 'Invalid AgeCategoryId.',
             ]);
@@ -148,7 +148,7 @@ try {
             :gender_id,
             :age_category_id,
             NULL,
-            0,
+            1,
             NOW(),
             NOW(),
             1
@@ -163,13 +163,13 @@ try {
         'age_category_id' => $ageCategoryId > 0 ? $ageCategoryId : null,
     ]);
 
-    send_json_response(201, [
+    send_json_response(200, [
         'Success' => true,
         'Message' => 'Citizen registered successfully.',
         'CitizenUserId' => (int) $pdo->lastInsertId(),
     ]);
 } catch (Throwable $exception) {
-    send_json_response(500, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Unable to register citizen.',
     ]);

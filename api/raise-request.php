@@ -13,20 +13,52 @@ function send_json_response(int $statusCode, array $payload): void
     exit;
 }
 
+function get_uploaded_files(): array
+{
+    $files = [];
+
+    if (isset($_FILES['Photo']) && $_FILES['Photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $files[] = [
+            'name' => $_FILES['Photo']['name'],
+            'type' => $_FILES['Photo']['type'],
+            'tmp_name' => $_FILES['Photo']['tmp_name'],
+            'error' => $_FILES['Photo']['error'],
+            'size' => $_FILES['Photo']['size'],
+        ];
+    }
+
+    if (isset($_FILES['Attachments']) && is_array($_FILES['Attachments']['name'])) {
+        foreach ($_FILES['Attachments']['name'] as $index => $name) {
+            if ($_FILES['Attachments']['error'][$index] === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            $files[] = [
+                'name' => $_FILES['Attachments']['name'][$index],
+                'type' => $_FILES['Attachments']['type'][$index],
+                'tmp_name' => $_FILES['Attachments']['tmp_name'][$index],
+                'error' => $_FILES['Attachments']['error'][$index],
+                'size' => $_FILES['Attachments']['size'][$index],
+            ];
+        }
+    }
+
+    return $files;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    send_json_response(405, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Only POST method is allowed.',
     ]);
 }
 
-$rawInput = file_get_contents('php://input');
-$decodedInput = json_decode($rawInput ?: '', true);
+$decodedInput = $_POST;
 
-if (!is_array($decodedInput)) {
-    send_json_response(400, [
+if (!is_array($decodedInput) || empty($decodedInput)) {
+    send_json_response(200, [
         'Success' => false,
-        'Message' => 'Invalid JSON input.',
+        'Message' => 'Invalid form data.',
     ]);
 }
 
@@ -39,70 +71,72 @@ $aadhaarNo = trim((string) ($decodedInput['AadhaarNo'] ?? ''));
 $description = trim((string) ($decodedInput['Description'] ?? ''));
 
 if ($citizenUserId <= 0) {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'CitizenUserId is required.',
-    ]);
+    send_json_response(200, ['Success' => false, 'Message' => 'CitizenUserId is required.']);
 }
 
 if ($requestTypeId <= 0) {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'RequestTypeId is required.',
-    ]);
+    send_json_response(200, ['Success' => false, 'Message' => 'RequestTypeId is required.']);
 }
 
 if ($wardId <= 0) {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'WardId is required.',
-    ]);
+    send_json_response(200, ['Success' => false, 'Message' => 'WardId is required.']);
 }
 
 if ($areaId <= 0) {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'AreaId is required.',
-    ]);
+    send_json_response(200, ['Success' => false, 'Message' => 'AreaId is required.']);
 }
 
 if ($address === '') {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'Address is required.',
-    ]);
+    send_json_response(200, ['Success' => false, 'Message' => 'Address is required.']);
 }
 
-if (mb_strlen($address) > 500) {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'Address must be 500 characters or fewer.',
-    ]);
+if (mb_strlen($address) > 200) {
+    send_json_response(200, ['Success' => false, 'Message' => 'Address must be 200 characters or fewer.']);
 }
 
 if ($aadhaarNo === '') {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'Aadhaar Number is required.',
-    ]);
+    send_json_response(200, ['Success' => false, 'Message' => 'Aadhaar Number is required.']);
 }
 
 if (!preg_match('/^[0-9]{12}$/', $aadhaarNo)) {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'Aadhaar Number must contain exactly 12 digits.',
-    ]);
+    send_json_response(200, ['Success' => false, 'Message' => 'Aadhaar Number must contain exactly 12 digits.']);
 }
 
 if ($description === '') {
-    send_json_response(422, [
-        'Success' => false,
-        'Message' => 'Description is required.',
-    ]);
+    send_json_response(200, ['Success' => false, 'Message' => 'Description is required.']);
+}
+
+$uploadedFiles = get_uploaded_files();
+
+$allowedMimeTypes = [
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png',
+    'image/webp' => 'webp',
+];
+
+$maxFileSize = 5 * 1024 * 1024;
+
+foreach ($uploadedFiles as $file) {
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        send_json_response(200, ['Success' => false, 'Message' => 'File upload failed.']);
+    }
+
+    if ((int) $file['size'] > $maxFileSize) {
+        send_json_response(200, ['Success' => false, 'Message' => 'Each file size must be less than 5 MB.']);
+    }
+
+    $mimeType = mime_content_type($file['tmp_name']);
+
+    if (!isset($allowedMimeTypes[$mimeType])) {
+        send_json_response(200, ['Success' => false, 'Message' => 'Only JPG, PNG, and WEBP files are allowed.']);
+    }
 }
 
 try {
     $pdo = app_pdo();
+
+    $currentDateTimeIST = (new DateTime('now', new DateTimeZone('Asia/Kolkata')))
+        ->format('Y-m-d H:i:s');
 
     $citizenStmt = $pdo->prepare(
         'SELECT CitizenUserId
@@ -111,15 +145,10 @@ try {
            AND IsActive = 1
          LIMIT 1'
     );
-    $citizenStmt->execute([
-        'citizen_user_id' => $citizenUserId,
-    ]);
+    $citizenStmt->execute(['citizen_user_id' => $citizenUserId]);
 
     if (!$citizenStmt->fetch()) {
-        send_json_response(422, [
-            'Success' => false,
-            'Message' => 'Invalid CitizenUserId.',
-        ]);
+        send_json_response(200, ['Success' => false, 'Message' => 'Invalid CitizenUserId.']);
     }
 
     $requestTypeStmt = $pdo->prepare(
@@ -129,15 +158,10 @@ try {
            AND IsActive = 1
          LIMIT 1'
     );
-    $requestTypeStmt->execute([
-        'request_type_id' => $requestTypeId,
-    ]);
+    $requestTypeStmt->execute(['request_type_id' => $requestTypeId]);
 
     if (!$requestTypeStmt->fetch()) {
-        send_json_response(422, [
-            'Success' => false,
-            'Message' => 'Invalid RequestTypeId.',
-        ]);
+        send_json_response(200, ['Success' => false, 'Message' => 'Invalid RequestTypeId.']);
     }
 
     $wardStmt = $pdo->prepare(
@@ -147,15 +171,10 @@ try {
            AND IsActive = 1
          LIMIT 1'
     );
-    $wardStmt->execute([
-        'ward_id' => $wardId,
-    ]);
+    $wardStmt->execute(['ward_id' => $wardId]);
 
     if (!$wardStmt->fetch()) {
-        send_json_response(422, [
-            'Success' => false,
-            'Message' => 'Invalid WardId.',
-        ]);
+        send_json_response(200, ['Success' => false, 'Message' => 'Invalid WardId.']);
     }
 
     $areaStmt = $pdo->prepare(
@@ -172,10 +191,7 @@ try {
     ]);
 
     if (!$areaStmt->fetch()) {
-        send_json_response(422, [
-            'Success' => false,
-            'Message' => 'Invalid AreaId.',
-        ]);
+        send_json_response(200, ['Success' => false, 'Message' => 'Invalid AreaId.']);
     }
 
     $statusStmt = $pdo->prepare(
@@ -188,10 +204,7 @@ try {
     $statusStmt->execute();
 
     if (!$statusStmt->fetch()) {
-        send_json_response(500, [
-            'Success' => false,
-            'Message' => 'Raised request status is not configured.',
-        ]);
+        send_json_response(200, ['Success' => false, 'Message' => 'Raised request status is not configured.']);
     }
 
     $pdo->beginTransaction();
@@ -223,12 +236,13 @@ try {
             :aadhaar_no,
             :description,
             1,
-            NOW(),
-            NOW(),
+            :raised_date,
+            :created_date,
             1,
             :remark
          )'
     );
+
     $insertStmt->execute([
         'request_no' => $temporaryRequestNo,
         'citizen_user_id' => $citizenUserId,
@@ -238,6 +252,8 @@ try {
         'address' => $address,
         'aadhaar_no' => $aadhaarNo,
         'description' => $description,
+        'raised_date' => $currentDateTimeIST,
+        'created_date' => $currentDateTimeIST,
         'remark' => '',
     ]);
 
@@ -254,21 +270,100 @@ try {
         'citizen_request_id' => $citizenRequestId,
     ]);
 
+    $historyStmt = $pdo->prepare(
+        'INSERT INTO RequestHistory (
+            RequestId,
+            StatusId,
+            Remarks,
+            UpdatedBy,
+            HistoryDateTime
+         ) VALUES (
+            :request_id,
+            1,
+            :remarks,
+            NULL,
+            :history_datetime
+         )'
+    );
+
+    $historyStmt->execute([
+        'request_id' => $citizenRequestId,
+        'remarks' => 'Request raised',
+        'history_datetime' => $currentDateTimeIST,
+    ]);
+
+    $requestHistoryId = (int) $pdo->lastInsertId();
+
+    $savedAttachments = [];
+
+    if (!empty($uploadedFiles)) {
+        $uploadDir = __DIR__ . '/../uploads/request/';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $attachmentStmt = $pdo->prepare(
+            'INSERT INTO RequestAttachment (
+                CitizenRequestId,
+                FileName,
+                FilePath,
+                UploadedOn,
+                IsActive
+             ) VALUES (
+                :citizen_request_id,
+                :file_name,
+                :file_path,
+                :uploaded_on,
+                1
+             )'
+        );
+
+        foreach ($uploadedFiles as $index => $file) {
+            $mimeType = mime_content_type($file['tmp_name']);
+            $extension = $allowedMimeTypes[$mimeType];
+
+            $fileName = $requestNo . '_' . ($index + 1) . '.' . $extension;
+            $relativePath = 'uploads/request/' . $fileName;
+            $destinationPath = $uploadDir . $fileName;
+
+            if (!move_uploaded_file($file['tmp_name'], $destinationPath)) {
+                throw new RuntimeException('Unable to save uploaded file.');
+            }
+
+            $attachmentStmt->execute([
+                'citizen_request_id' => $citizenRequestId,
+                'file_name' => $fileName,
+                'file_path' => $relativePath,
+                'uploaded_on' => $currentDateTimeIST,
+            ]);
+
+            $savedAttachments[] = [
+                'FileName' => $fileName,
+                'FilePath' => $relativePath,
+            ];
+        }
+    }
+
     $pdo->commit();
 
-    send_json_response(201, [
+    send_json_response(200, [
         'Success' => true,
         'Message' => 'Request raised successfully.',
         'CitizenRequestId' => $citizenRequestId,
         'RequestNo' => $requestNo,
+        'RequestHistoryId' => $requestHistoryId,
+        'Attachments' => $savedAttachments,
     ]);
+
 } catch (Throwable $exception) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
 
-    send_json_response(500, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Unable to raise request.',
+        'Error' => $exception->getMessage(),
     ]);
 }

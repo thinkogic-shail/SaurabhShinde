@@ -14,7 +14,7 @@ function send_json_response(int $statusCode, array $payload): void
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    send_json_response(405, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Only POST method is allowed.',
         'data' => [],
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $rawInput = file_get_contents('php://input');
 
 if ($rawInput === false) {
-    send_json_response(400, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Unable to read request body.',
         'data' => [],
@@ -35,7 +35,7 @@ $trimmedInput = trim($rawInput);
 $decodedInput = $trimmedInput === '' ? [] : json_decode($trimmedInput, true);
 
 if (!is_array($decodedInput)) {
-    send_json_response(400, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Invalid JSON input.',
         'data' => [],
@@ -68,7 +68,7 @@ try {
         'data' => $data,
     ]);
 } catch (Throwable $exception) {
-    send_json_response(500, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Unable to fetch gender list.',
         'data' => [],

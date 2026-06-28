@@ -37,7 +37,7 @@ function build_asset_url(string $relativePath): string
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    send_json_response(405, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Only POST method is allowed.',
         'data' => null,
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $rawInput = file_get_contents('php://input');
 
 if ($rawInput === false) {
-    send_json_response(400, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Unable to read request body.',
         'data' => null,
@@ -58,7 +58,7 @@ $trimmedInput = trim($rawInput);
 $decodedInput = $trimmedInput === '' ? [] : json_decode($trimmedInput, true);
 
 if (!is_array($decodedInput)) {
-    send_json_response(400, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Invalid JSON input.',
         'data' => null,
@@ -79,7 +79,7 @@ try {
     $foundationInfo = $stmt->fetch();
 
     if (!$foundationInfo) {
-        send_json_response(404, [
+        send_json_response(200, [
             'success' => false,
             'message' => 'No active foundation information found.',
             'data' => null,
@@ -99,7 +99,7 @@ try {
         ],
     ]);
 } catch (Throwable $exception) {
-    send_json_response(500, [
+    send_json_response(200, [
         'success' => false,
         'message' => 'Unable to fetch foundation information.',
         'data' => null,

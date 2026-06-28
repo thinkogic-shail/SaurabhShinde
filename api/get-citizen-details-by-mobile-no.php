@@ -37,7 +37,7 @@ function build_profile_photo_url(?string $relativePath): ?string
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    send_json_response(405, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Only POST method is allowed.',
     ]);
@@ -47,7 +47,7 @@ $rawInput = file_get_contents('php://input');
 $decodedInput = json_decode($rawInput ?: '', true);
 
 if (!is_array($decodedInput)) {
-    send_json_response(400, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Invalid JSON input.',
     ]);
@@ -56,14 +56,14 @@ if (!is_array($decodedInput)) {
 $mobileNo = trim((string) ($decodedInput['MobileNo'] ?? ''));
 
 if ($mobileNo === '') {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Mobile Number is required.',
     ]);
 }
 
 if (!preg_match('/^[0-9]{10}$/', $mobileNo)) {
-    send_json_response(422, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Mobile Number must contain exactly 10 digits.',
     ]);
@@ -82,7 +82,8 @@ try {
                 cu.AgeCategoryId,
                 acm.CategoryName AS AgeCategoryName,
                 cu.ProfilePhoto,
-                cu.IsMobileVerified
+                cu.IsMobileVerified,
+                cu.IsAdmin
          FROM CitizenUser cu
          LEFT JOIN GenderMaster gm ON gm.GenderId = cu.GenderId
          LEFT JOIN AgeCategoryMaster acm ON acm.AgeCategoryId = cu.AgeCategoryId
@@ -97,7 +98,7 @@ try {
     $citizen = $stmt->fetch();
 
     if (!$citizen) {
-        send_json_response(404, [
+        send_json_response(200, [
             'Success' => false,
             'Message' => 'Citizen not found.',
         ]);
@@ -116,12 +117,14 @@ try {
             'GenderName' => (string) ($citizen['GenderName'] ?? ''),
             'AgeCategoryId' => isset($citizen['AgeCategoryId']) ? (int) $citizen['AgeCategoryId'] : null,
             'AgeCategoryName' => (string) ($citizen['AgeCategoryName'] ?? ''),
-            'ProfilePhoto' => build_profile_photo_url($citizen['ProfilePhoto'] ?? null),
+            // 'ProfilePhoto' => build_profile_photo_url($citizen['ProfilePhoto'] ?? null),
+            'ProfilePhoto' => (string)($citizen['ProfilePhoto'] ?? null),
             'IsMobileVerified' => (int) ($citizen['IsMobileVerified'] ?? 0) === 1,
+            'IsAdmin' => (int) ($citizen['IsAdmin'] ?? 0) === 1,
         ],
     ]);
 } catch (Throwable $exception) {
-    send_json_response(500, [
+    send_json_response(200, [
         'Success' => false,
         'Message' => 'Unable to fetch citizen details.',
     ]);
