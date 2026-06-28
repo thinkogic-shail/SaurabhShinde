@@ -101,7 +101,6 @@ render_admin_header('Ward Master', [
                             <tr>
                                 <th>Ward ID</th>
                                 <th>Ward Name</th>
-                                <th>Status</th>
                                 <th style="width: 140px;">Action</th>
                             </tr>
                         </thead>
@@ -117,13 +116,6 @@ render_admin_header('Ward Master', [
                                     <td><?php echo (int) $ward['WardId']; ?></td>
                                     <td title="<?php echo htmlspecialchars($fullWardName, ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php echo htmlspecialchars($displayWardName, ENT_QUOTES, 'UTF-8'); ?>
-                                    </td>
-                                    <td>
-                                        <?php if ((int) $ward['IsActive'] === 1): ?>
-                                            <span class="badge rounded-pill bg-success">Active</span>
-                                        <?php else: ?>
-                                            <span class="badge rounded-pill bg-secondary">Inactive</span>
-                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">

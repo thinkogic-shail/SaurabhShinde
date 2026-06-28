@@ -107,7 +107,6 @@ render_admin_header('Request Type Master', [
                                 <th>Request Type ID</th>
                                 <th>Request Type Name</th>
                                 <th>Description</th>
-                                <th>Status</th>
                                 <th style="width: 140px;">Action</th>
                             </tr>
                         </thead>
@@ -130,13 +129,6 @@ render_admin_header('Request Type Master', [
                                     </td>
                                     <td title="<?php echo htmlspecialchars($fullDescription, ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php echo htmlspecialchars($displayDescription, ENT_QUOTES, 'UTF-8'); ?>
-                                    </td>
-                                    <td>
-                                        <?php if ((int) $requestType['IsActive'] === 1): ?>
-                                            <span class="badge rounded-pill bg-success">Active</span>
-                                        <?php else: ?>
-                                            <span class="badge rounded-pill bg-secondary">Inactive</span>
-                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">

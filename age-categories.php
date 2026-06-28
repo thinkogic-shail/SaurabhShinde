@@ -106,7 +106,6 @@ render_admin_header('Age Category Master', [
                             <tr>
                                 <th>Age Category ID</th>
                                 <th>Category Name</th>
-                                <th>Status</th>
                                 <th style="width: 140px;">Action</th>
                             </tr>
                         </thead>
@@ -122,13 +121,6 @@ render_admin_header('Age Category Master', [
                                     <td><?php echo (int) $ageCategory['AgeCategoryId']; ?></td>
                                     <td title="<?php echo htmlspecialchars($fullCategoryName, ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php echo htmlspecialchars($displayCategoryName, ENT_QUOTES, 'UTF-8'); ?>
-                                    </td>
-                                    <td>
-                                        <?php if ((int) $ageCategory['IsActive'] === 1): ?>
-                                            <span class="badge rounded-pill bg-success">Active</span>
-                                        <?php else: ?>
-                                            <span class="badge rounded-pill bg-secondary">Inactive</span>
-                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">

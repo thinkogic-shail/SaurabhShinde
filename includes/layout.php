@@ -354,9 +354,6 @@ function render_admin_footer(array $extraJs = []): void
                             <script>document.write(new Date().getFullYear())</script> © Saurabh Shinde Foundation.
                         </div>
                         <div class="col-sm-6">
-                            <div class="text-sm-end d-none d-sm-block">
-                                Admin Panel
-                            </div>
                         </div>
                     </div>
                 </div>

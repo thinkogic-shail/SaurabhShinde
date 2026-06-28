@@ -108,7 +108,6 @@ render_admin_header('Area Master', [
                                 <th>Area ID</th>
                                 <th>Ward Name</th>
                                 <th>Area Name</th>
-                                <th>Status</th>
                                 <th style="width: 140px;">Action</th>
                             </tr>
                         </thead>
@@ -125,13 +124,6 @@ render_admin_header('Area Master', [
                                     <td><?php echo htmlspecialchars($area['WardName'], ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td title="<?php echo htmlspecialchars($fullAreaName, ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php echo htmlspecialchars($displayAreaName, ENT_QUOTES, 'UTF-8'); ?>
-                                    </td>
-                                    <td>
-                                        <?php if ((int) $area['IsActive'] === 1): ?>
-                                            <span class="badge rounded-pill bg-success">Active</span>
-                                        <?php else: ?>
-                                            <span class="badge rounded-pill bg-secondary">Inactive</span>
-                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
