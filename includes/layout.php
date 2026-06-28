@@ -54,6 +54,10 @@ function render_admin_header(string $title, array $extraCss = [], string $active
     <link href="<?php echo htmlspecialchars($css, ENT_QUOTES, 'UTF-8'); ?>" rel="stylesheet" type="text/css">
 <?php endforeach; ?>
     <style>
+        html,
+        body {
+            min-height: 100%;
+        }
         .btn-secondary {
             background-color: #E24949 !important;
             border-color: #E24949 !important;
@@ -63,6 +67,31 @@ function render_admin_header(string $title, array $extraCss = [], string $active
         .page-content,
         #layout-wrapper {
             background-color: #fff !important;
+        }
+        body[data-sidebar=dark].vertical-collpsed {
+            min-height: 100vh !important;
+        }
+        #layout-wrapper {
+            min-height: 100vh;
+        }
+        .main-content {
+            min-height: calc(100vh - 70px);
+            display: flex;
+            flex-direction: column;
+        }
+        .page-content {
+            flex: 1 0 auto;
+            padding-bottom: 1rem !important;
+        }
+        .footer {
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            width: auto !important;
+            margin-top: auto;
+        }
+        .vertical-collpsed .footer {
+            left: auto !important;
         }
         body,
         button,
