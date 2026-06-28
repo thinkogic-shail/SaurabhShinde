@@ -29,7 +29,6 @@ $flash = get_flash_message();
 $users = $pdo->query(
     'SELECT e.EmployeeId, e.UserName, e.MobileNo, e.Email, e.IsMobileVerified, e.IsActive
      FROM Employee e
-     WHERE e.IsActive = 1
      ORDER BY e.EmployeeId DESC'
 )->fetchAll();
 
@@ -86,7 +85,16 @@ render_admin_header('User Management', [
 
                 <div class="row mb-3">
                     <div class="col-md-3">
+                        <label class="form-label" for="filter-status">Status</label>
+                        <select id="filter-status" class="form-select">
+                            <option value="">All</option>
+                            <option value="Active" selected>Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <div class="search-box">
+                            <label class="form-label" for="custom-search">&nbsp;</label>
                             <div class="position-relative">
                                 <input type="search" id="custom-search" class="form-control rounded" placeholder="Search...">
                                 <i class="ri-search-line search-icon"></i>
@@ -170,6 +178,13 @@ render_admin_header('User Management', [
         $('#custom-search').on('keyup', function() {
             userTable.search(this.value).draw();
         });
+
+        $('#filter-status').on('change', function() {
+            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+            userTable.column(3).search(val ? '^' + val + '$' : '', true, false).draw();
+        });
+
+        $('#filter-status').trigger('change');
 
         document.querySelectorAll('.delete-user-form').forEach(function (form) {
             form.addEventListener('submit', function (event) {
