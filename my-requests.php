@@ -8,13 +8,16 @@ require_admin_login();
 $flash = get_flash_message();
 $pdo = app_pdo();
 $whereClause = '';
+$selectedStatusFilter = '';
 if (isset($_GET['filter'])) {
     if ($_GET['filter'] === 'closed') {
         $whereClause = " WHERE TRIM(LOWER(rsm.StatusName)) IN ('completed', 'declined')";
     } elseif ($_GET['filter'] === 'open') {
         $whereClause = " WHERE TRIM(LOWER(rsm.StatusName)) = 'raised'";
+        $selectedStatusFilter = 'Raised';
     } elseif ($_GET['filter'] === 'in_progress') {
         $whereClause = " WHERE TRIM(LOWER(rsm.StatusName)) = 'in progress'";
+        $selectedStatusFilter = 'In Progress';
     }
 }
 
@@ -345,6 +348,11 @@ render_admin_header('My Requests', [
             var val = $.fn.dataTable.util.escapeRegex($(this).val());
             myRequestsTable.column(6).search(val ? val : '', true, false).draw();
         });
+
+        const selectedStatusFilter = <?php echo json_encode($selectedStatusFilter, JSON_UNESCAPED_SLASHES); ?>;
+        if (selectedStatusFilter !== '') {
+            $('#filter-status').val(selectedStatusFilter).trigger('change');
+        }
 
         $('#filter-date-from, #filter-date-to').on('keydown paste', function(event) {
             event.preventDefault();
