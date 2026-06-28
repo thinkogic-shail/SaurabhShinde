@@ -62,18 +62,47 @@ render_admin_header('My Requests', [
         padding: 0.25rem 0.5rem !important;
         font-size: 0.875rem !important;
     }
+    #filter-date-range {
+        display: flex;
+        align-items: stretch;
+        flex-wrap: nowrap;
+        width: 100%;
+    }
+    #filter-date-range .form-control {
+        flex: 1 1 0;
+        min-width: 78px;
+        text-align: center;
+        font-size: 0.78rem;
+        padding-left: 0.2rem;
+        padding-right: 0.2rem;
+    }
     #filter-date-range .input-group-text {
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background-color: #fff;
         border-left: 0;
         border-right: 0;
-        padding-left: 0.25rem;
-        padding-right: 0.25rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        min-width: 24px;
     }
     #filter-date-range #filter-date-from {
         border-right: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
     }
     #filter-date-range #filter-date-to {
         border-left: 0;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    @media (max-width: 767.98px) {
+        #filter-date-range .form-control {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            font-size: 0.875rem;
+        }
     }
 </style>
 <div class="row">
@@ -112,7 +141,7 @@ render_admin_header('My Requests', [
                 </div>
 
                 <div class="row mb-3 align-items-end">
-                    <div class="col">
+                    <div class="col-md-3 col-lg-2">
                         <label class="form-label" for="filter-date-range">Date Range</label>
                         <div class="input-daterange input-group" id="filter-date-range">
                             <input type="text" id="filter-date-from" class="form-control" placeholder="From Date" readonly>
