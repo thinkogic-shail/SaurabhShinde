@@ -5,6 +5,11 @@ function app_asset(string $path): string
     return 'themesdesign.in/nazox/layouts/' . ltrim($path, '/');
 }
 
+function app_favicon_url(): string
+{
+    return 'uploads/favicon.png?v=1';
+}
+
 function is_menu_active(string $menuKey, string $activeMenu): string
 {
     return $menuKey === $activeMenu ? 'mm-active' : '';
@@ -43,7 +48,7 @@ function render_admin_header(string $title, array $extraCss = [], string $active
     <meta charset="utf-8">
     <title><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?> | Saurabh Shinde Foundation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="<?php echo app_asset('assets/images/favicon.ico'); ?>">
+    <link rel="icon" type="image/png" href="<?php echo app_favicon_url(); ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">

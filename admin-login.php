@@ -95,8 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <meta charset="utf-8" />
         <title>Admin Panel Login - Saurabh Shinde Foundation</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- App favicon -->
-        <link rel="shortcut icon" href="themesdesign.in/nazox/layouts/assets/images/favicon.ico">
+        <link rel="icon" type="image/png" href="uploads/favicon.png?v=1">
         <!-- Bootstrap Css -->
         <link href="themesdesign.in/nazox/layouts/assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
         <!-- Icons Css -->
