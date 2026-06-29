@@ -42,6 +42,12 @@ if ($isEditMode) {
         exit;
     }
 
+    if ((int) ($existingUser['IsActive'] ?? 0) !== 1) {
+        set_flash_message('danger', 'This user has been deleted and cannot be edited.');
+        header('Location: users.php');
+        exit;
+    }
+
     $user = [
         'UserName' => (string) $existingUser['UserName'],
         'UserPassword' => '',
@@ -157,6 +163,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($errors === []) {
+        if ($isEditMode) {
+            $editableUserStmt = $pdo->prepare(
+                'SELECT EmployeeId, IsActive
+                 FROM Employee
+                 WHERE EmployeeId = :employee_id
+                 LIMIT 1'
+            );
+            $editableUserStmt->execute([
+                'employee_id' => $userId,
+            ]);
+            $editableUser = $editableUserStmt->fetch();
+
+            if (!$editableUser) {
+                set_flash_message('danger', 'Selected user record was not found.');
+                header('Location: users.php');
+                exit;
+            }
+
+            if ((int) ($editableUser['IsActive'] ?? 0) !== 1) {
+                set_flash_message('danger', 'This user has been deleted and cannot be edited.');
+                header('Location: users.php');
+                exit;
+            }
+        }
+
         if ($isEditMode) {
             if (trim($user['UserPassword']) !== '') {
                 $updateStmt = $pdo->prepare(
