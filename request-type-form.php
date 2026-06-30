@@ -11,6 +11,7 @@ $isEditMode = $requestTypeId > 0;
 $requestType = [
     'RequestTypeName' => '',
     'Description' => '',
+    'ShowRequest' => '1',
 ];
 $errors = [];
 
@@ -30,7 +31,11 @@ $redirectIfRequestTypeInactive = static function (array|false $existingRequestTy
 
 if ($isEditMode) {
     $stmt = $pdo->prepare(
-        'SELECT RequestTypeId, RequestTypeName, Description, IsActive
+        'SELECT RequestTypeId,
+                RequestTypeName,
+                Description,
+                IsActive,
+                CAST(ShowRequest AS UNSIGNED) AS ShowRequest
          FROM RequestTypeMaster
          WHERE RequestTypeId = :id'
     );
@@ -47,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $isEditMode = $requestTypeId > 0;
     $requestType['RequestTypeName'] = trim($_POST['request_type_name'] ?? '');
     $requestType['Description'] = trim($_POST['description'] ?? '');
+    $requestType['ShowRequest'] = isset($_POST['show_request']) ? '1' : '0';
 
     if ($requestType['RequestTypeName'] === '') {
         $errors['RequestTypeName'] = 'Request type name is required.';
@@ -88,24 +94,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $pdo->prepare(
                 'UPDATE RequestTypeMaster
-                 SET RequestTypeName = :request_type_name, Description = :description
+                 SET RequestTypeName = :request_type_name,
+                     Description = :description,
+                     ShowRequest = :show_request
                  WHERE RequestTypeId = :request_type_id'
             );
             $stmt->execute([
                 'request_type_name' => $requestType['RequestTypeName'],
                 'description' => $requestType['Description'] !== '' ? $requestType['Description'] : null,
+                'show_request' => (int) $requestType['ShowRequest'],
                 'request_type_id' => $requestTypeId,
             ]);
 
             set_flash_message('success', 'Request Type updated successfully.');
         } else {
             $stmt = $pdo->prepare(
-                'INSERT INTO RequestTypeMaster (RequestTypeName, Description, IsActive)
-                 VALUES (:request_type_name, :description, 1)'
+                'INSERT INTO RequestTypeMaster (RequestTypeName, Description, IsActive, ShowRequest)
+                 VALUES (:request_type_name, :description, 1, :show_request)'
             );
             $stmt->execute([
                 'request_type_name' => $requestType['RequestTypeName'],
                 'description' => $requestType['Description'] !== '' ? $requestType['Description'] : null,
+                'show_request' => (int) $requestType['ShowRequest'],
             ]);
 
             set_flash_message('success', 'Request Type added successfully.');
@@ -130,6 +140,20 @@ render_admin_header($pageTitle, [], 'request-type', false);
     }
     .page-title-box {
         padding-bottom: 0 !important;
+    }
+    .form-check.form-switch {
+        padding-left: 3rem;
+    }
+    .form-check-input.request-toggle {
+        width: 2.8rem;
+        height: 1.4rem;
+        margin-left: -3rem;
+        cursor: pointer;
+    }
+    .switch-label {
+        font-size: 0.95rem;
+        color: #475569;
+        margin-left: 0.5rem;
     }
 </style>
 <div class="row">
@@ -190,6 +214,24 @@ render_admin_header($pageTitle, [], 'request-type', false);
                         <?php endif; ?>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="form-label d-block">Request Enabled</label>
+                        <div class="form-check form-switch">
+                            <input
+                                class="form-check-input request-toggle"
+                                type="checkbox"
+                                role="switch"
+                                id="show_request"
+                                name="show_request"
+                                value="1"
+                                <?php echo (string) ($requestType['ShowRequest'] ?? '1') === '1' ? 'checked' : ''; ?>
+                            >
+                            <label class="form-check-label switch-label" for="show_request" id="show-request-label">
+                                <?php echo (string) ($requestType['ShowRequest'] ?? '1') === '1' ? 'Yes' : 'No'; ?>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="mb-0">
                         <button type="submit" class="btn btn-primary waves-effect waves-light me-1" style="background-color: #002253; border-color: #002253;">
                             <?php echo $isEditMode ? 'Update' : 'Save'; ?>
@@ -210,6 +252,22 @@ render_admin_header($pageTitle, [], 'request-type', false);
             en: 'Request type name is required.'
         }
     });
+
+    (function () {
+        var showRequestToggle = document.getElementById('show_request');
+        var showRequestLabel = document.getElementById('show-request-label');
+
+        if (!showRequestToggle || !showRequestLabel) {
+            return;
+        }
+
+        var syncShowRequestLabel = function () {
+            showRequestLabel.textContent = showRequestToggle.checked ? 'Yes' : 'No';
+        };
+
+        showRequestToggle.addEventListener('change', syncShowRequestLabel);
+        syncShowRequestLabel();
+    })();
 </script>
 <?php
 render_admin_footer([

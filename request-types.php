@@ -31,7 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 
 $flash = get_flash_message();
 $requestTypes = $pdo->query(
-    'SELECT RequestTypeId, RequestTypeName, Description, IsActive
+    'SELECT RequestTypeId,
+            RequestTypeName,
+            Description,
+            IsActive,
+            CAST(ShowRequest AS UNSIGNED) AS ShowRequest
      FROM RequestTypeMaster
      WHERE IsActive = 1
      ORDER BY RequestTypeId DESC'
@@ -88,7 +92,15 @@ render_admin_header('Request Type Master', [
                     </a>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label" for="request-enabled-filter">Request Enabled</label>
+                        <select id="request-enabled-filter" class="form-select">
+                            <option value="">All</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
                     <div class="col-md-3">
                         <!--<label class="form-label" for="custom-search">Search</label>-->
                         <div class="search-box">
@@ -107,6 +119,7 @@ render_admin_header('Request Type Master', [
                                 <th>Request Type ID</th>
                                 <th>Request Type Name</th>
                                 <th>Description</th>
+                                <th>Request Enabled</th>
                                 <th style="width: 140px;">Action</th>
                             </tr>
                         </thead>
@@ -130,6 +143,7 @@ render_admin_header('Request Type Master', [
                                     <td title="<?php echo htmlspecialchars($fullDescription, ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php echo htmlspecialchars($displayDescription, ENT_QUOTES, 'UTF-8'); ?>
                                     </td>
+                                    <td><?php echo (int) ($requestType['ShowRequest'] ?? 0) === 1 ? 'Yes' : 'No'; ?></td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <?php
@@ -170,6 +184,11 @@ render_admin_header('Request Type Master', [
 
         $('#custom-search').on('keyup', function() {
             requestTypeTable.search(this.value).draw();
+        });
+
+        $('#request-enabled-filter').on('change', function () {
+            var selectedValue = this.value;
+            requestTypeTable.column(3).search(selectedValue ? '^' + selectedValue + '$' : '', true, false).draw();
         });
 
         document.querySelectorAll('.delete-request-type-form').forEach(function (form) {
